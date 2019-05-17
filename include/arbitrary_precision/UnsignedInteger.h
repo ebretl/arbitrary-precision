@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <iostream>
 #include <vector>
 #include <tuple>
 
@@ -13,6 +12,7 @@ class UnsignedInteger : public Number<UnsignedInteger, uint32_t> {
 public:
   UnsignedInteger();
   UnsignedInteger(uint32_t n);
+  UnsignedInteger(const UnsignedInteger&);
 
   std::string PrintDecimal() const override;
   std::string PrintRaw() const;

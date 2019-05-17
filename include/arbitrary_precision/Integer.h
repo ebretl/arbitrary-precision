@@ -9,6 +9,7 @@ class Integer : public Number<Integer, int32_t> {
 public:
   Integer();
   Integer(int32_t x);
+  Integer(const Integer&);
 
   std::string PrintDecimal() const override;
 

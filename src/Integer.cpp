@@ -9,6 +9,8 @@ Integer::Integer(int32_t x) {
 
 Integer::Integer() : Integer(0) {}
 
+Integer::Integer(const Integer& other) : mag(other.mag), sign(other.sign) {}
+
 std::string Integer::PrintDecimal() const {
   return std::string(sign ? "-" : "") + mag.PrintDecimal();
 }
@@ -79,14 +81,16 @@ Integer Integer::operator%(const Integer &other) const {
 
 Integer Integer::Pow(Integer p) const {
   Integer out = *this;
+  // std::cout << "Pow " << p << std::endl;
 
   while (p > 1) {
-    out = out * *this;
+    // std::cout << p << std::endl;
+    out = out * (*this);
     p = p - 1;
   }
 
   while (p < 1 && out != 0) {
-    out = out / *this;
+    out = out / (*this);
     p = p + 1;
   }
 

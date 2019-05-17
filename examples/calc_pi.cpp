@@ -5,6 +5,8 @@
 #include <atomic>
 #include <deque>
 #include <tuple>
+#include <mutex>
+#include <condition_variable>
 
 #include <arbitrary_precision/arbitrary_precision.h>
 
@@ -19,32 +21,38 @@ double time_now() {
 int main() {
   auto t_start = time_now();
 
-  Float::Factory f(1000);
+  Float::Factory f(150);
 
   Float acc = f(0);
   Integer k = 0;
 
-  // std::condition_variable cond;
-  // std::mutex m;
-  // std::unique_lock<std::mutex> lock(m);
-  auto add_fn = [&f](const Integer& k, std::atomic_bool* finished, Float* partial) {
+  std::condition_variable cond;
+  std::mutex m;
+  std::atomic<int> free_cores = 4;
+  auto add_fn = [&f, &cond, &free_cores, &m](const Integer& k, bool* finished, Float* partial) {
+    free_cores--;
+
     *partial = (f(4)/f(8*k+1) - f(2)/f(8*k+4) - f(1)/f(8*k+5) - f(1)/f(8*k+6)) / f(Integer(16).Pow(k));
     *finished = true;
+
+    std::unique_lock<std::mutex> lock(m);
+    free_cores++;
+    cond.notify_all();
   };
 
-  std::deque<std::tuple<std::atomic_bool, Float, bool>> futures;
-  int free_cores = 2;
+  std::deque<std::tuple<bool, Float, bool>> futures;
   bool done = false;
 
   while (!done) {
-    while (free_cores > 0) {
+    bool print = false;
+
+    for (int i = 0; i < free_cores; i++) {
       auto& [processed, x, integrated] = futures.emplace_back(false, f(0), false);
       std::thread(add_fn, k, &processed, &x).detach();
-      free_cores--;
       k = k + 1;
 
-      if (k % 50 == 0) {
-        cout << acc << endl;
+      if (k % 10 == 0) {
+        print = true;
       }
     }
 
@@ -55,16 +63,20 @@ int main() {
           done = true;
         }
         acc = acc + x;
-        free_cores++;
         integrated = true;
       }
+    }
+
+    if (print) {
+      cout << acc << endl;
     }
 
     while (std::get<2>(futures.front())) {
       futures.pop_front();
     }
 
-    std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
+    std::unique_lock<std::mutex> lock(m);
+    cond.wait(lock);
   }
 
   for (auto& future : futures) {

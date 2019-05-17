@@ -14,6 +14,10 @@ UnsignedInteger::UnsignedInteger(uint32_t n) {
   Trim();
 }
 
+UnsignedInteger::UnsignedInteger(const UnsignedInteger& other) {
+  data_ = other.data_;
+}
+
 void UnsignedInteger::Trim() {
   auto last_nonzero_it = data_.end();
   while (last_nonzero_it != data_.begin() + 1 && *(last_nonzero_it - 1) == 0) {
