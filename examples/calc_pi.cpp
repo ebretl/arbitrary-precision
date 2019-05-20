@@ -15,37 +15,33 @@ int main() {
 
   ap::Float::Factory f(150);
   ap::UnsignedInteger k = 0;
-  ap::Float acc = f(0);
+  ap::Float pi = f(0);
 
-  auto acc_ptr = &acc;
-  std::mutex mutex;
-  auto gen_fn = [f, acc_ptr, &mutex](ap::Integer k) -> bool {
-    ap::Float res = (f(4)/f(8*k+1) - f(2)/f(8*k+4) - f(1)/f(8*k+5) - f(1)/f(8*k+6)) / f(ap::Integer(16).Pow(k));
-
-    std::unique_lock lock(mutex);
-    *acc_ptr = *acc_ptr + res;
-    lock.unlock();
-
-    return res == f(0);
+  auto gen_fn = [&f](ap::Integer k) {
+    return (f(4)/f(8*k+1) - f(2)/f(8*k+4) - f(1)/f(8*k+5) - f(1)/f(8*k+6)) / f(ap::Integer(16).Pow(k));
   };
 
-  ap::ThreadPool pool(4);
+  auto add = [](const ap::Float& x1, const ap::Float& x2) {
+    return x1 + x2;
+  };
 
-  bool done = false;
-  while (!done) {
-    std::vector<ap::Integer> inputs(8);
+  ap::ThreadPool pool;
+
+  ap::Float last_pi = pi - f(1);
+  while (last_pi != pi) {
+    last_pi = pi;
+
+    std::vector<ap::Integer> inputs(4);
     for (int i = 0; i < inputs.size(); i++) {
       inputs[i] = k + i;
     }
     k = k + inputs.size();
 
-    std::vector<bool> results = pool.Map(gen_fn, inputs);
+    pi = pool.MapReduce(gen_fn, add, pi, inputs);
 
-    done = std::any_of(results.begin(), results.end(), [](bool b){return b;});
-
-    // cout << acc << endl;
+    // cout << pi << endl;
   }
 
   cout << "converged in " << (time_now() - time_start) << endl;
-  cout << acc << endl;
+  cout << pi << endl;
 }

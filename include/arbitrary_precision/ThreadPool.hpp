@@ -11,7 +11,6 @@ namespace ap {
 
 namespace _thread_pool_metafuncs {
 
-
 std::tuple<> get_each_arg(int i) {
   return std::make_tuple<>();
 }
@@ -51,7 +50,9 @@ public:
   ThreadPool() : ThreadPool(std::thread::hardware_concurrency()) {}
 
   template <typename _Fn, typename... _Args>
-  std::vector<std::result_of_t<_Fn(_Args...)>> StarMap(_Fn f, const std::vector<std::tuple<_Args...>>& args_list) {
+  std::vector<std::result_of_t<_Fn(_Args...)>> StarMap(const _Fn& f,
+      const std::vector<std::tuple<_Args...>>& args_list) {
+
     using _Res = std::result_of_t<_Fn(_Args...)>;
 
     std::vector<_Res> out(args_list.size());
@@ -87,9 +88,36 @@ public:
   }
 
   template <typename _Fn, typename... _Args>
-  std::vector<std::result_of_t<_Fn(_Args...)>> Map(_Fn f, const std::vector<_Args>&... arg_lists) {
+  std::vector<std::result_of_t<_Fn(_Args...)>> Map(const _Fn& f, const std::vector<_Args>&... arg_lists) {
     auto star_args_list = _thread_pool_metafuncs::arg_lists_to_star_args_list(arg_lists...);
     return StarMap(f, star_args_list);
+  }
+
+  template <typename AccType, typename MapFn, typename ReduceFn, typename... MapArgTypes>
+  AccType StarMapReduce(const MapFn& map_fn, const ReduceFn& reduce_fn, AccType accumulator,
+                        const std::vector<std::tuple<MapArgTypes...>>& map_args_list) {
+    auto acc_ptr = &accumulator;
+    std::mutex acc_mutex;
+
+    std::function map_reduce_func = [&, acc_ptr] (const MapArgTypes&... map_args) {
+      auto map_result = map_fn(map_args...);
+
+      std::lock_guard lock(acc_mutex);
+      *acc_ptr = reduce_fn(*acc_ptr, map_result);
+
+      return 0;  // dummy return type
+    };
+
+    StarMap(map_reduce_func, map_args_list);
+
+    return accumulator;
+  }
+
+  template <typename AccType, typename MapFn, typename ReduceFn, typename... MapArgTypes>
+  AccType MapReduce(const MapFn& map_fn, const ReduceFn& reduce_fn, const AccType& accumulator,
+                    const std::vector<MapArgTypes>&... map_arg_lists) {
+    auto star_args_list = _thread_pool_metafuncs::arg_lists_to_star_args_list(map_arg_lists...);
+    return StarMapReduce(map_fn, reduce_fn, accumulator, star_args_list);
   }
 
 private:
