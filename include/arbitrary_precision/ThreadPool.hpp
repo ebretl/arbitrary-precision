@@ -34,7 +34,7 @@ template <typename... _Args>
 std::vector<std::tuple<_Args...>> arg_lists_to_star_args_list(const std::vector<_Args>&... arg_lists) {
   std::vector<std::tuple<_Args...>> star_args_list(min_list_size(arg_lists...));
 
-  for (int i = 0; i < star_args_list.size(); i++) {
+  for (size_t i = 0; i < star_args_list.size(); i++) {
     star_args_list[i] = get_each_arg(i, arg_lists...);
   }
 

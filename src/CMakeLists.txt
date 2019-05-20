@@ -4,5 +4,4 @@ add_library(arbitrary_precision
         Float.cpp)
 target_link_libraries(arbitrary_precision pthread)
 
-set_property(TARGET arbitrary_precision PROPERTY COMPILE_FLAGS -O3)
-set_property(TARGET arbitrary_precision PROPERTY COMPILE_FLAGS -Wall)
+set_property(TARGET arbitrary_precision PROPERTY COMPILE_FLAGS "-O3 -Wall -Wpedantic")
