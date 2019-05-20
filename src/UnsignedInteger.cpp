@@ -138,17 +138,13 @@ UnsignedInteger UnsignedInteger::operator*(const UnsignedInteger &other) const {
       overflow.data_.push_back(0);
 
       for (size_t j = 0; j < other.data_.size(); j++) {
-//        std::cout << "----- i " << i << " j " << j << std::endl;
         auto a = static_cast<uint16_t>(data_[i]);
         auto b = static_cast<uint16_t>(other.data_[j]);
         uint16_t val = a * b;
-//        std::cout << a << " * " << b << " = " << (val >> 8u) << " " << (val & 0xFFu) << std::endl;
         overflow.data_.push_back(val >> 8u);
         direct.data_.push_back(val & 0xFFu);
       }
 
-//      std::cout << "direct " << direct.PrintRaw() << std::endl;
-//      std::cout << "overflow " << overflow.PrintRaw() << std::endl;
       UnsignedInteger partial = direct + overflow;
       partial.data_.insert(partial.data_.begin(), i, 0u);
 

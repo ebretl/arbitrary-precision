@@ -13,7 +13,7 @@ double time_now() {
 int main() {
   auto time_start = time_now();
 
-  ap::Float::Factory f(1000);
+  ap::Float::Factory f(150);
   ap::UnsignedInteger k = 0;
   ap::Float pi = f(0);
 
@@ -31,7 +31,7 @@ int main() {
   while (last_pi != pi) {
     last_pi = pi;
 
-    std::vector<ap::Integer> inputs(16);
+    std::vector<ap::Integer> inputs(4);
     for (size_t i = 0; i < inputs.size(); i++) {
       inputs[i] = k + i;
     }
@@ -39,7 +39,7 @@ int main() {
 
     pi = pool.MapReduce(gen_fn, add, pi, inputs);
 
-    cout << pi << endl;
+    // cout << pi << endl;
   }
 
   cout << "converged in " << (time_now() - time_start) << endl;
