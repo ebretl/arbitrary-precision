@@ -1,92 +1,51 @@
 #include <iostream>
-#include <chrono>
-#include <cmath>
-#include <thread>
-#include <atomic>
-#include <deque>
 #include <tuple>
-#include <mutex>
-#include <condition_variable>
 
 #include <arbitrary_precision/arbitrary_precision.h>
 
-
 using std::cout, std::endl;
-using namespace ap;
+
 
 double time_now() {
   return std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
 int main() {
-  auto t_start = time_now();
+  auto time_start = time_now();
 
-  Float::Factory f(150);
+  ap::Float::Factory f(150);
+  ap::UnsignedInteger k = 0;
+  ap::Float acc = f(0);
 
-  Float acc = f(0);
-  Integer k = 0;
+  auto acc_ptr = &acc;
+  std::mutex mutex;
+  auto gen_fn = [f, acc_ptr, &mutex](ap::Integer k) -> bool {
+    ap::Float res = (f(4)/f(8*k+1) - f(2)/f(8*k+4) - f(1)/f(8*k+5) - f(1)/f(8*k+6)) / f(ap::Integer(16).Pow(k));
 
-  std::condition_variable cond;
-  std::mutex m;
-  std::atomic<int> free_cores = 4;
-  auto add_fn = [&f, &cond, &free_cores, &m](const Integer& k, bool* finished, Float* partial) {
-    free_cores--;
+    std::unique_lock lock(mutex);
+    *acc_ptr = *acc_ptr + res;
+    lock.unlock();
 
-    *partial = (f(4)/f(8*k+1) - f(2)/f(8*k+4) - f(1)/f(8*k+5) - f(1)/f(8*k+6)) / f(Integer(16).Pow(k));
-    *finished = true;
-
-    std::unique_lock<std::mutex> lock(m);
-    free_cores++;
-    cond.notify_all();
+    return res == f(0);
   };
 
-  std::deque<std::tuple<bool, Float, bool>> futures;
+  ap::ThreadPool pool(4);
+
   bool done = false;
-
   while (!done) {
-    bool print = false;
-
-    for (int i = 0; i < free_cores; i++) {
-      auto& [processed, x, integrated] = futures.emplace_back(false, f(0), false);
-      std::thread(add_fn, k, &processed, &x).detach();
-      k = k + 1;
-
-      if (k % 10 == 0) {
-        print = true;
-      }
+    std::vector<ap::Integer> inputs(8);
+    for (int i = 0; i < inputs.size(); i++) {
+      inputs[i] = k + i;
     }
+    k = k + inputs.size();
 
-    for (auto& future : futures) {
-      auto& [processed, x, integrated] = future;
-      if (processed && !integrated) {
-        if (x == f(0)) {
-          done = true;
-        }
-        acc = acc + x;
-        integrated = true;
-      }
-    }
+    std::vector<bool> results = pool.Map(gen_fn, inputs);
 
-    if (print) {
-      cout << acc << endl;
-    }
+    done = std::any_of(results.begin(), results.end(), [](bool b){return b;});
 
-    while (std::get<2>(futures.front())) {
-      futures.pop_front();
-    }
-
-    std::unique_lock<std::mutex> lock(m);
-    cond.wait(lock);
+    // cout << acc << endl;
   }
 
-  for (auto& future : futures) {
-    auto& [processed, x, integrated] = future;
-    while (!processed) {
-      std::this_thread::sleep_for(std::chrono::duration<double>(0.01));
-    }
-    acc = acc + x;
-  }
-
-  cout << "converged in " << (time_now() - t_start) << " seconds" << endl;
+  cout << "converged in " << (time_now() - time_start) << endl;
   cout << acc << endl;
 }

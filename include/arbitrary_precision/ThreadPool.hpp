@@ -5,130 +5,99 @@
 #include <atomic>
 #include <future>
 #include <deque>
+#include <type_traits>
 
 namespace ap {
 
+namespace _thread_pool_metafuncs {
 
-template <typename ResultT>
-struct Future {
-  ResultT data_;
-  bool ready_;
-  std::recursive_mutex mutex_;
-  std::condition_variable_any cond_;
 
-  Future() {
-    ready_ = false;
+std::tuple<> get_each_arg(int i) {
+  return std::make_tuple<>();
+}
+
+template <typename T0, typename... Ts>
+std::tuple<T0, Ts...> get_each_arg(int i, const std::vector<T0>& in0, const std::vector<Ts>&... ins) {
+  return std::tuple_cat(std::make_tuple(in0[i]), get_each_arg(i, ins...));
+}
+
+template <typename T>
+size_t min_list_size(const std::vector<T>& v) {
+  return v.size();
+}
+
+template <typename T0, typename... Ts>
+size_t min_list_size(const std::vector<T0>& vec0, const std::vector<Ts>&... vecs) {
+  return std::min(vec0.size(), min_list_size(vecs...));
+}
+
+template <typename... _Args>
+std::vector<std::tuple<_Args...>> arg_lists_to_star_args_list(const std::vector<_Args>&... arg_lists) {
+  std::vector<std::tuple<_Args...>> star_args_list(min_list_size(arg_lists...));
+
+  for (int i = 0; i < star_args_list.size(); i++) {
+    star_args_list[i] = get_each_arg(i, arg_lists...);
   }
 
-  Future(const Future& other) = delete;
+  return star_args_list;
+}
 
-  bool Available() {
-    std::lock_guard lock(mutex_);
-    return ready_;
-  }
-
-  ResultT& Get() {
-    std::lock_guard lock(mutex_);
-    return data_;
-  }
-
-  void Set(const ResultT& other) {
-    std::lock_guard lock(mutex_);
-    data_ = other;
-    ready_ = true;
-    // std::cout << "set" << std::endl;
-    cond_.notify_all();
-  }
-
-  void DoWhenComplete(std::function<void(ResultT&)> f) {
-    std::thread([this, f] {
-      std::unique_lock lock(mutex_);
-      while (!Available()) {
-        cond_.wait_for(lock, std::chrono::duration<double>(0.1));
-      }
-      f(Get());
-    }).detach();
-  }
-};
+}  // namespace _thread_pool_metafuncs
 
 
-template <typename ResultT, typename... Args>
 class ThreadPool {
 public:
+  ThreadPool(size_t n_threads) : free_threads_(n_threads) {}
+  ThreadPool() : ThreadPool(std::thread::hardware_concurrency()) {}
 
+  template <typename _Fn, typename... _Args>
+  std::vector<std::result_of_t<_Fn(_Args...)>> StarMap(_Fn f, const std::vector<std::tuple<_Args...>>& args_list) {
+    using _Res = std::result_of_t<_Fn(_Args...)>;
 
-  ThreadPool(unsigned int jobs, std::function<ResultT(Args...)> function) {
-    available_jobs_ = jobs;
-    func = function;
-    done_ = false;
+    std::vector<_Res> out(args_list.size());
+    size_t done_jobs = 0;
 
-    auto f = [this] {
-      __run_jobs_thread();
-    };
-    std::thread(f).detach();
-  }
+    std::unique_lock lock(mutex_);
 
-  ~ThreadPool() {
-    done_ = true;
-
-    std::unique_lock<std::mutex> lock(mutex_);
-    cond_.notify_all();
-  }
-
-  void __run_jobs_thread() {
-    std::unique_lock<std::mutex> lock(mutex_);
-
-    while (!done_) {
-
-      if (!start_queue_.empty() && available_jobs_ > 0) {
-        std::tuple<Args...> args = start_queue_.front();
-        start_queue_.pop_front();
-        auto future_ptr = finish_queue_.front();
-        finish_queue_.pop_front();
-        available_jobs_--;
-
-        auto f = [this, args, future_ptr] {
-          auto res = std::apply(func, args);
-          future_ptr->Set(res);
-
-          std::unique_lock<std::mutex> lock(mutex_);
-          available_jobs_++;
-          cond_.notify_all();
-        };
-        std::thread(f).detach();
-        // std::cout << "started new thread " << std::get<0>(args) << std::endl;
+    for (size_t i = 0; i < args_list.size(); i++) {
+      if (free_threads_ <= 0) {
+        cond_.wait(lock);
       }
 
-      else {
-        cond_.wait_for(lock, std::chrono::duration<double>(1.0));  // wait for job start or finish event
-      }
+      free_threads_--;
+
+      auto run_job = [&, i] {
+        _Res x = std::apply(f, args_list[i]);
+
+        std::unique_lock lock(mutex_);
+        out[i] = x;
+        free_threads_++;
+        done_jobs++;
+        cond_.notify_all();
+      };
+
+      std::thread(run_job).detach();
     }
+
+    while (done_jobs < args_list.size()) {
+      cond_.wait(lock);
+    }
+
+    return out;
   }
 
-  bool IsAvailable() {
-    return available_jobs_ > 0;
-  }
-
-  std::shared_ptr<Future<ResultT>> Apply(Args... args) {
-    std::unique_lock<std::mutex> lock(mutex_);
-    start_queue_.push_back(std::make_tuple(args...));
-    auto future_ptr = std::make_shared<Future<ResultT>>();
-    finish_queue_.push_back(future_ptr);
-    // std::cout << std::get<0>(start_queue_.back()) << std::endl;
-    cond_.notify_all();
-    return finish_queue_.back();
+  template <typename _Fn, typename... _Args>
+  std::vector<std::result_of_t<_Fn(_Args...)>> Map(_Fn f, const std::vector<_Args>&... arg_lists) {
+    auto star_args_list = _thread_pool_metafuncs::arg_lists_to_star_args_list(arg_lists...);
+    return StarMap(f, star_args_list);
   }
 
 private:
-  std::function<ResultT(Args...)> func;
+  int free_threads_;
 
-  std::deque<std::tuple<Args...>> start_queue_;
-  std::deque<std::shared_ptr<Future<ResultT>>> finish_queue_;
-
-  std::atomic<int> available_jobs_;
-  std::condition_variable cond_;
   std::mutex mutex_;
-  std::atomic<bool> done_;
+  std::condition_variable_any cond_;
 };
 
-}
+
+}  // namespace ap

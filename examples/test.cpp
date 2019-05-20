@@ -1,5 +1,9 @@
 #include <iostream>
 #include <tuple>
+#include <numeric>
+#include <random>
+#include <array>
+#include <chrono>
 
 #include <arbitrary_precision/arbitrary_precision.h>
 
@@ -11,49 +15,37 @@ double time_now() {
 }
 
 int main() {
-  auto time_start = time_now();
+  std::tuple<> t1 = std::make_tuple();
+  std::tuple<int> t2 = std::make_tuple(1);
+  auto cat = std::tuple_cat(t1, t2);
+  auto [x] = cat;
+  cout << x << endl;
 
-  ap::Float::Factory f(150);
-  ap::Integer k = 0;
-  ap::Float acc = f(0);
+  ap::ThreadPool tps(4);
 
-  std::function gen_fn = [f](ap::Integer k) -> ap::Float {
-    ap::Float res = (f(4)/f(8*k+1) - f(2)/f(8*k+4) - f(1)/f(8*k+5) - f(1)/f(8*k+6)) / f(ap::Integer(16).Pow(k));
-    return res;
+  std::mt19937 rand{std::random_device{}()};
+  std::uniform_int_distribution d(5, 2000);
+
+  auto func = [&](int x, char c) -> int {
+    std::this_thread::sleep_for(std::chrono::milliseconds(d(rand)));
+    cout << x << " " << c << endl;
+    return x * x;
   };
 
-  // std::mutex acc_mutex;
-  // ap::Float* acc_ptr = &acc;
-  // std::function integrate_fn = [acc_ptr, &acc_mutex](ap::Float x) -> void {
-  //   std::lock_guard lock(acc_mutex);
-  //   *acc_ptr = *acc_ptr + x;
-  //   cout << *acc_ptr << endl;
-  // };
-
-  ap::ThreadPool pool(4, gen_fn);
-  std::deque<std::shared_ptr<ap::Future<ap::Float>>> futures;
-
-  bool done = false;
-  while (!done) {
-    if (pool.IsAvailable()) {
-      for (int i = 0; i < 100; i++) {
-        futures.push_back(pool.Apply(k));
-        k = k + 1;
-      }
-    }
-
-    while (!futures.empty() && futures.front()->Available()) {
-      auto new_acc = acc + futures.front()->Get();
-      if (new_acc == acc) {
-        done = true;
-      }
-      acc = new_acc;
-      // cout << acc << endl;
-      futures.pop_front();
-    }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  std::vector<int> input1(15);
+  std::vector<char> input2(20);
+  for (size_t i = 0; i < input1.size(); i++) {
+    // input[i] = std::make_tuple(i);
+    input1[i] = i;
+    input2[i] = 'a' + i;
   }
 
-  cout << "converged in " << (time_now() - time_start) << endl;
+  auto result = tps.Map(func, input1, input2);
+
+  cout << "results" << endl;
+
+  for (const auto& x : result) {
+    cout << x << endl;
+  }
+
 }

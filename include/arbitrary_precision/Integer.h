@@ -10,6 +10,7 @@ public:
   Integer();
   Integer(int32_t x);
   Integer(const Integer&);
+  Integer(const UnsignedInteger&);
 
   std::string PrintDecimal() const override;
 

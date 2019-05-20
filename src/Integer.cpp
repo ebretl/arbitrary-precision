@@ -11,6 +11,8 @@ Integer::Integer() : Integer(0) {}
 
 Integer::Integer(const Integer& other) : mag(other.mag), sign(other.sign) {}
 
+Integer::Integer(const UnsignedInteger& other) : mag(other), sign(false) {}
+
 std::string Integer::PrintDecimal() const {
   return std::string(sign ? "-" : "") + mag.PrintDecimal();
 }
