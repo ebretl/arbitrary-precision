@@ -35,7 +35,7 @@ Float Float::operator-(const Float &other) const {
 
 Float Float::operator*(const Float &other) const {
   Float out;
-  out.N = N * other.N;
+  out.N = N * other.N / Integer(10).Pow(pow10);
   out.pow10 = pow10;
   return out;
 }

@@ -83,12 +83,10 @@ Integer Integer::operator%(const Integer &other) const {
 
 Integer Integer::Pow(Integer p) const {
   Integer out = *this;
-  // std::cout << "Pow " << p << std::endl;
 
-  while (p > 1) {
-    // std::cout << p << std::endl;
-    out = out * (*this);
-    p = p - 1;
+  if (p > 1) {
+    out = Integer(mag.Pow(p.mag));
+    out.sign = sign && (p % 2 != 0);
   }
 
   while (p < 1 && out != 0) {

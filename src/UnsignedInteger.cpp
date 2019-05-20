@@ -1,4 +1,5 @@
 #include <arbitrary_precision/UnsignedInteger.h>
+#include <thread>
 
 
 namespace ap {
@@ -127,7 +128,54 @@ UnsignedInteger UnsignedInteger::operator-(const ap::UnsignedInteger &other) con
   return res;
 }
 
-UnsignedInteger UnsignedInteger::operator*(const UnsignedInteger &other) const {
+UnsignedInteger UnsignedInteger::Karatsuba(UnsignedInteger x, UnsignedInteger y) {
+  // std::cout << "Karatsuba " << x.PrintRaw() << " | " << y.PrintRaw() << std::endl;
+
+  UnsignedInteger out = 0;
+  x.Trim();
+  y.Trim();
+
+  if (x != 0 && y != 0) {
+    // std::cout << "0" << std::endl;
+
+    auto max_bytes = std::max(x.data_.size(), y.data_.size());
+    x.data_.insert(x.data_.end(), max_bytes - x.data_.size(), 0u);
+    y.data_.insert(y.data_.end(), max_bytes - y.data_.size(), 0u);
+
+    // std::cout << "1" << std::endl;
+
+    if (max_bytes == 1) {
+      out = x.data_[0] * y.data_[0];  // unsigned int constructor
+    } else {
+      auto shift_bytes = max_bytes / 2;
+
+      auto x1 = x.ByteShifted(-shift_bytes);  // right shift
+      auto x2 = x - x1.ByteShifted(shift_bytes);
+      auto y1 = y.ByteShifted(-shift_bytes);
+      auto y2 = y - y1.ByteShifted(shift_bytes);
+
+      // std::cout << "x1 " << x1.PrintRaw() << std::endl;
+      // std::cout << "x2 " << x2.PrintRaw() << std::endl;
+      // std::cout << "y1 " << y1.PrintRaw() << std::endl;
+      // std::cout << "y2 " << y2.PrintRaw() << std::endl;
+
+      // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+      auto F = x1 * y1;
+      auto G = x2 * y2;
+      auto H = (x1 + x2) * (y1 + y2);
+      auto K = H - F - G;
+
+      out = F.ByteShifted(2 * shift_bytes) + K.ByteShifted(shift_bytes) + G;
+    }
+
+    out.Trim();
+  }
+
+  return out;
+}
+
+UnsignedInteger UnsignedInteger::LongMultiply(const UnsignedInteger& other) const {
   UnsignedInteger out = 0;
 
   if (*this != 0 && other != 0) {
@@ -153,6 +201,17 @@ UnsignedInteger UnsignedInteger::operator*(const UnsignedInteger &other) const {
   }
 
   out.Trim();
+  return out;
+}
+
+UnsignedInteger UnsignedInteger::operator*(const UnsignedInteger &other) const {
+  UnsignedInteger out;
+  auto max_size = std::max(data_.size(), other.data_.size());
+  if (max_size > 250) {
+    out = Karatsuba(*this, other);
+  } else {
+    out = LongMultiply(other);
+  }
   return out;
 }
 
@@ -228,12 +287,17 @@ UnsignedInteger UnsignedInteger::operator%(const UnsignedInteger &D) const {
   return std::get<1>(DivMod(D));
 }
 
-UnsignedInteger UnsignedInteger::Pow(UnsignedInteger p) const {
-  UnsignedInteger out = *this;
+UnsignedInteger UnsignedInteger::Pow(const UnsignedInteger& p) const {
+  UnsignedInteger out = 1;
 
-  while (p > 1) {
-    out = out * *this;
-    p = p - 1;
+  auto [q, r] = p.DivMod(2);
+
+  if (p > 3 && r == 0) {
+    out = Pow(q) * Pow(q);
+  } else if (p > 1) {
+    out = *this * Pow(p - 1);
+  } else if (p == 1) {
+    out = *this;
   }
 
   return out;

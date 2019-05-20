@@ -27,7 +27,7 @@ public:
 
   std::tuple<UnsignedInteger, UnsignedInteger> DivMod(const UnsignedInteger &t) const;
   UnsignedInteger ByteShifted(int32_t shift) const;
-  UnsignedInteger Pow(UnsignedInteger) const;
+  UnsignedInteger Pow(const UnsignedInteger&) const;
 
   bool GetBit(uint32_t bit) const;
   void SetBit(uint32_t b, bool val);
@@ -36,6 +36,9 @@ private:
   std::vector<uint8_t> data_;
 
   void Trim();
+
+  static UnsignedInteger Karatsuba(UnsignedInteger, UnsignedInteger);
+  UnsignedInteger LongMultiply(const UnsignedInteger&) const;
 };
 
 }  // namespace ap
