@@ -15,28 +15,30 @@ double time_now() {
 }
 
 int main() {
+  using ap::Integer;
+  using Float = ap::Float<1000>;
+
+  auto gen_fn = [](Integer k) {
+    cout << "starting " << k << endl;
+    Float x = (Float(4)/(8*k+1) - Float(2)/(8*k+4) - Float(1)/(8*k+5) - Float(1)/(8*k+6)) / ap::Integer(16).Pow(k);
+    cout << "finished " << k << endl;
+    return x;
+  };
+
+  cout << ap::Integer(16).Pow(209) << endl;
+
   double t;
 
-  for (int x : {100, 500, 1000, 5000, 10000}) {
-    t = time_now();
-    ap::Float::Factory f(x);
-    cout << "making factory " << time_now() - t << endl;
+  t = time_now();
+  Float a = 1;
+  Float b = 2;
+  cout << "creating a and b " << time_now() - t << endl;
 
-    t = time_now();
-    auto a = f(1);
-    auto b = f(2);
-    cout << "creating a and b " << time_now() - t << endl;
+  t = time_now();
+  auto y = a * b;
+  cout << "multiply " << time_now() - t << endl;
 
-    t = time_now();
-    auto y = a * b;
-    cout << "multiply " << time_now() - t << endl;
-
-    if (x <= 500) {
-      cout << y << endl;
-    }
-  }
-
-  // for (int i = 0; i < 6; i++) {
-  //   cout << ap::Integer(-10).Pow(i) << endl;
-  // }
+  t = time_now();
+  auto y2 = a / b;
+  cout << "divide " << time_now() - t << endl;
 }

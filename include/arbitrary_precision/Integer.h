@@ -12,7 +12,7 @@ public:
   Integer(const Integer&);
   Integer(const UnsignedInteger&);
 
-  std::string PrintDecimal() const override;
+  std::string Print() const override;
 
   int Compare(const Integer&) const override;
 
@@ -21,6 +21,8 @@ public:
   Integer operator*(const Integer &t) const override;
   Integer operator/(const Integer &t) const override;
   Integer operator%(const Integer &t) const override;
+  Integer operator<<(const Integer &t) const override;
+  Integer operator>>(const Integer &t) const override;
 
   Integer Pow(Integer) const;
 

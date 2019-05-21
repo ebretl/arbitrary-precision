@@ -13,8 +13,8 @@ Integer::Integer(const Integer& other) : mag(other.mag), sign(other.sign) {}
 
 Integer::Integer(const UnsignedInteger& other) : mag(other), sign(false) {}
 
-std::string Integer::PrintDecimal() const {
-  return std::string(sign ? "-" : "") + mag.PrintDecimal();
+std::string Integer::Print() const {
+  return std::string(sign ? "-" : "") + mag.Print();
 }
 
 int Integer::Compare(const Integer& other) const {
@@ -77,6 +77,20 @@ Integer Integer::operator/(const Integer &other) const {
 Integer Integer::operator%(const Integer &other) const {
   Integer out;
   out.mag = mag % other.mag;
+  out.sign = sign;
+  return out;
+}
+
+Integer Integer::operator<<(const ap::Integer &other) const {
+  Integer out;
+  out.mag = other.sign ? (mag >> other.mag) : (mag << other.mag);
+  out.sign = sign;
+  return out;
+}
+
+Integer Integer::operator>>(const ap::Integer &other) const {
+  Integer out;
+  out.mag = other.sign ? (mag << other.mag) : (mag >> other.mag);
   out.sign = sign;
   return out;
 }

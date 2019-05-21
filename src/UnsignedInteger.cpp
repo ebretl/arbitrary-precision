@@ -8,9 +8,11 @@ UnsignedInteger::UnsignedInteger() : UnsignedInteger(0u) {}
 
 UnsignedInteger::UnsignedInteger(uint32_t n) {
   data_.clear();
-  for (uint8_t shift = 0; shift < 32; shift += 8) {
-    auto byte = (n >> shift) & 0xFFu;
-    data_.push_back(byte);
+  uint32_t divisor = 1;
+  for (int i = 0; i < 10; i++) {
+    auto digit = (n / divisor) % 10;
+    data_.push_back(digit);
+    divisor *= 10;
   }
   Trim();
 }
@@ -27,43 +29,10 @@ void UnsignedInteger::Trim() {
   data_.erase(last_nonzero_it, data_.end());
 }
 
-std::string UnsignedInteger::PrintRaw() const {
+std::string UnsignedInteger::Print() const {
   std::string out;
-  for (auto byte : data_) {
-    out += std::to_string(static_cast<int>(byte)) + " ";
-  }
-  if (!out.empty()) {
-    out.erase(out.size() - 1);
-  }
-  return out;
-}
-
-std::string UnsignedInteger::PrintDecimal() const {
-  std::string out;
-  std::vector<int> digits;
-
-  UnsignedInteger N = *this;
-  UnsignedInteger K = 1;
-  while (K <= N) {
-    K = K * 10;
-  }
-
-  while (K > 0) {
-    if (N >= K) {
-      N = N - K;
-      digits.back()++;
-    } else {
-      K = K / 10;
-      digits.push_back(0);
-    }
-  }
-
-  if (digits.size() > 1) {
-    digits.erase(digits.end() - 1);
-  }
-
-  for (int n : digits) {
-    out += std::to_string(n);
+  for (auto it = data_.rbegin(); it != data_.rend(); ++it) {
+    out += std::to_string(static_cast<int>(*it));
   }
   return out;
 }
@@ -86,18 +55,17 @@ int UnsignedInteger::Compare(const ap::UnsignedInteger &other) const {
 UnsignedInteger UnsignedInteger::operator+(const ap::UnsignedInteger &other) const {
   UnsignedInteger out;
   out.data_.clear();
-  uint16_t carry = 0;
+  uint8_t carry = 0;
   for (size_t byte_num = 0; byte_num < std::max(data_.size(), other.data_.size()); byte_num++) {
-    uint16_t val = carry;
+    uint8_t val = carry;
     if (byte_num < data_.size()) {
       val += data_[byte_num];
     }
     if (byte_num < other.data_.size()) {
       val += other.data_[byte_num];
     }
-    carry = val >> 8u;
-    val = val & 0xFFu;
-    out.data_.push_back(val);
+    carry = val / 10;
+    out.data_.push_back(val % 10);
   }
 
   if (carry != 0) {
@@ -108,17 +76,21 @@ UnsignedInteger UnsignedInteger::operator+(const ap::UnsignedInteger &other) con
 }
 
 UnsignedInteger UnsignedInteger::operator-(const ap::UnsignedInteger &other) const {
+  if (other > *this) {
+    throw std::exception();
+  }
+
   UnsignedInteger other_negated;
   other_negated.data_.clear();
-  for (auto byte : other.data_) {
-    other_negated.data_.push_back(~byte);
+  for (auto digit : other.data_) {
+    other_negated.data_.push_back(9u - digit);
   }
 
   if (data_.size() > other.data_.size()) {
-    other_negated.data_.insert(other_negated.data_.end(), data_.size() - other.data_.size(), 255u);
+    other_negated.data_.insert(other_negated.data_.end(), data_.size() - other.data_.size(), 9u);
   }
 
-  other_negated = other_negated + 1;
+  other_negated = other_negated + 1u;
   UnsignedInteger res = *this + other_negated;
 
   if (res.data_.size() > data_.size()) {
@@ -128,45 +100,34 @@ UnsignedInteger UnsignedInteger::operator-(const ap::UnsignedInteger &other) con
   return res;
 }
 
-UnsignedInteger UnsignedInteger::Karatsuba(UnsignedInteger x, UnsignedInteger y) {
-  // std::cout << "Karatsuba " << x.PrintRaw() << " | " << y.PrintRaw() << std::endl;
-
+UnsignedInteger UnsignedInteger::Karatsuba(UnsignedInteger& x, UnsignedInteger& y) {
   UnsignedInteger out = 0;
   x.Trim();
   y.Trim();
 
   if (x != 0 && y != 0) {
-    // std::cout << "0" << std::endl;
+    auto max_digits = std::max(x.data_.size(), y.data_.size());
+    x.data_.insert(x.data_.end(), max_digits - x.data_.size(), 0u);
+    y.data_.insert(y.data_.end(), max_digits - y.data_.size(), 0u);
 
-    auto max_bytes = std::max(x.data_.size(), y.data_.size());
-    x.data_.insert(x.data_.end(), max_bytes - x.data_.size(), 0u);
-    y.data_.insert(y.data_.end(), max_bytes - y.data_.size(), 0u);
-
-    // std::cout << "1" << std::endl;
-
-    if (max_bytes == 1) {
+    if (max_digits == 1) {
       out = x.data_[0] * y.data_[0];  // unsigned int constructor
     } else {
-      auto shift_bytes = max_bytes / 2;
+      auto shift = max_digits / 2;
 
-      auto x1 = x.ByteShifted(-shift_bytes);  // right shift
-      auto x2 = x - x1.ByteShifted(shift_bytes);
-      auto y1 = y.ByteShifted(-shift_bytes);
-      auto y2 = y - y1.ByteShifted(shift_bytes);
+      auto x1 = x >> shift;
+      auto x2 = x - (x1 << shift);
+      auto y1 = y >> shift;
+      auto y2 = y - (y1 << shift);
+      auto x_sum = x1 + x2;
+      auto y_sum = y1 + y2;
 
-      // std::cout << "x1 " << x1.PrintRaw() << std::endl;
-      // std::cout << "x2 " << x2.PrintRaw() << std::endl;
-      // std::cout << "y1 " << y1.PrintRaw() << std::endl;
-      // std::cout << "y2 " << y2.PrintRaw() << std::endl;
-
-      // std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-      auto F = x1 * y1;
-      auto G = x2 * y2;
-      auto H = (x1 + x2) * (y1 + y2);
+      auto F = _mult_impl(x1, y1);
+      auto G = _mult_impl(x2, y2);
+      auto H = _mult_impl(x_sum, y_sum);
       auto K = H - F - G;
 
-      out = F.ByteShifted(2 * shift_bytes) + K.ByteShifted(shift_bytes) + G;
+      out = F << (2 * shift) + K << (shift) + G;
     }
 
     out.Trim();
@@ -186,11 +147,9 @@ UnsignedInteger UnsignedInteger::LongMultiply(const UnsignedInteger& other) cons
       overflow.data_.push_back(0);
 
       for (size_t j = 0; j < other.data_.size(); j++) {
-        auto a = static_cast<uint16_t>(data_[i]);
-        auto b = static_cast<uint16_t>(other.data_[j]);
-        uint16_t val = a * b;
-        overflow.data_.push_back(val >> 8u);
-        direct.data_.push_back(val & 0xFFu);
+        uint8_t val = data_[i] * other.data_[j];
+        overflow.data_.push_back(val / 10u);
+        direct.data_.push_back(val % 10u);
       }
 
       UnsignedInteger partial = direct + overflow;
@@ -204,24 +163,40 @@ UnsignedInteger UnsignedInteger::LongMultiply(const UnsignedInteger& other) cons
   return out;
 }
 
-UnsignedInteger UnsignedInteger::operator*(const UnsignedInteger &other) const {
+UnsignedInteger UnsignedInteger::_mult_impl(UnsignedInteger& x, UnsignedInteger& y) {
   UnsignedInteger out;
-  auto max_size = std::max(data_.size(), other.data_.size());
+  auto max_size = std::max(x.data_.size(), y.data_.size());
   if (max_size > 250) {
-    out = Karatsuba(*this, other);
+    out = Karatsuba(x, y);
   } else {
-    out = LongMultiply(other);
+    out = x.LongMultiply(y);
   }
   return out;
 }
 
-UnsignedInteger UnsignedInteger::ByteShifted(int32_t shift) const {
+UnsignedInteger UnsignedInteger::operator*(const UnsignedInteger &other) const {
+  auto x = *this;
+  auto y = other;
+  return _mult_impl(x, y);
+}
+
+UnsignedInteger UnsignedInteger::operator<<(const UnsignedInteger& shift) const {
   UnsignedInteger out = *this;
-  if (shift > 0) {
-    out.data_.insert(out.data_.begin(), shift, 0u);
-  } else if (shift < 0) {
-    shift = std::min(std::abs(shift), static_cast<int32_t>(out.data_.size()));
-    out.data_.erase(out.data_.begin(), out.data_.begin() + std::abs(shift));
+  auto counter = shift;
+
+  for (; counter > 0; counter = counter - 1) {
+    out.data_.insert(out.data_.begin(), 0u);
+  }
+
+  return out;
+}
+
+UnsignedInteger UnsignedInteger::operator>>(const UnsignedInteger& shift) const {
+  UnsignedInteger out = *this;
+  auto counter = shift;
+
+  for (; counter > 0 && !out.data_.empty(); counter = counter - 1) {
+    out.data_.erase(out.data_.begin());
   }
 
   if (out.data_.empty()) {
@@ -229,28 +204,6 @@ UnsignedInteger UnsignedInteger::ByteShifted(int32_t shift) const {
   }
 
   return out;
-}
-
-bool UnsignedInteger::GetBit(uint32_t b) const {
-  uint32_t i = b / 8u;
-  uint8_t j = b % 8u;
-  return (i < data_.size()) ? ((data_[i] >> j) & 1u) : false;
-}
-
-void UnsignedInteger::SetBit(uint32_t b, bool val) {
-  uint32_t i = b / 8u;
-  uint8_t j = b % 8u;
-
-  if (i >= data_.size()) {
-    data_.insert(data_.end(), i - data_.size(), 0u);
-  }
-
-  uint8_t v = (data_[i] >> j) & 1u;
-  if (v && !val) {
-    data_[i] -= 1u << j;
-  } else if (!v && val) {
-    data_[i] += 1u << j;
-  }
 }
 
 std::tuple<UnsignedInteger, UnsignedInteger> UnsignedInteger::DivMod(const UnsignedInteger &D) const {
@@ -265,13 +218,10 @@ std::tuple<UnsignedInteger, UnsignedInteger> UnsignedInteger::DivMod(const Unsig
   Q.data_.insert(Q.data_.begin(), data_.size(), 0u);
 
   for (int i = Q.data_.size() - 1; i >= 0; i--) {
-    for (int j = 7; j >= 0; j--) {
-      R = R * 2;
-      R.SetBit(0, this->GetBit(8 * i + j));
-      if (R >= D) {
-        R = R - D;
-        Q.SetBit(8 * i + j, true);
-      }
+    R.data_.insert(R.data_.begin(), data_[i]);
+    while (R >= D) {
+      R = R - D;
+      Q.data_[i] += 1;
     }
   }
 
@@ -289,6 +239,8 @@ UnsignedInteger UnsignedInteger::operator%(const UnsignedInteger &D) const {
 
 UnsignedInteger UnsignedInteger::Pow(const UnsignedInteger& p) const {
   UnsignedInteger out = 1;
+
+  std::cout << *this << " ^ " << p << std::endl;
 
   auto [q, r] = p.DivMod(2);
 

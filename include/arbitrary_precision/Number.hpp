@@ -20,11 +20,13 @@ namespace ap {
 template <typename T, typename Primitive>
 class Number {
 public:
-  virtual std::string PrintDecimal() const = 0;
-  friend std::ostream& operator<<(std::ostream& stream, const T& N) { return stream << N.PrintDecimal(); }
+  virtual std::string Print() const = 0;
+  friend std::ostream& operator<<(std::ostream& stream, const T& N) { return stream << N.Print(); }
 
+  // positive for >, 0 for ==, -1 for <
   virtual int Compare(const T&) const = 0;
 
+  // these generate comparison operator definitions and do not need to be overridden (just implement Compare)
   COMPARATOR(<)
   COMPARATOR(<=)
   COMPARATOR(>)
@@ -32,11 +34,14 @@ public:
   COMPARATOR(==)
   COMPARATOR(!=)
 
+  // these generate pure virtual declarations which must be overridden
   MATH_OP(+)
   MATH_OP(-)
   MATH_OP(*)
   MATH_OP(/)
   MATH_OP(%)
+  MATH_OP(<<)
+  MATH_OP(>>)
 };
 
 }  // namespace ap
