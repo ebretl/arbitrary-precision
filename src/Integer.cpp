@@ -9,8 +9,6 @@ Integer::Integer(int32_t x) {
 
 Integer::Integer() : Integer(0) {}
 
-Integer::Integer(const Integer& other) : mag(other.mag), sign(other.sign) {}
-
 Integer::Integer(const UnsignedInteger& other) : mag(other), sign(false) {}
 
 std::string Integer::Print() const {
@@ -34,79 +32,73 @@ int Integer::Compare(const Integer& other) const {
 }
 
 
-Integer Integer::operator+(const Integer &other) const {
-  Integer out;
+void Integer::operator+=(const Integer &other) {
   if (sign == other.sign) {
-    out.mag = mag + other.mag;
-    out.sign = sign;
+    mag += other.mag;
   } else {
     bool flip_order = mag < other.mag;
     if (flip_order) {
-      out.mag = other.mag - mag;
+      mag = other.mag - mag;
     } else {
-      out.mag = mag - other.mag;
+      mag -= other.mag;
     }
 
-    out.sign = (!flip_order && sign) || (flip_order && !sign);
-    out.sign &= (out.mag != 0);
+    sign = ((!flip_order && sign) || (flip_order && !sign)) && (mag != 0);
   }
-
-  return out;
 }
 
-Integer Integer::operator-(const Integer &other) const {
+void Integer::operator-=(const Integer &other) {
   Integer flipped = other;
   flipped.sign = !other.sign;
-  return *this + flipped;
+  *this += flipped;
 }
 
-Integer Integer::operator*(const Integer &other) const {
-  Integer out;
-  out.mag = mag * other.mag;
-  out.sign = (sign != other.sign);
-  return out;
+void Integer::operator*=(const Integer &other) {
+  mag *= other.mag;
+  sign = (sign != other.sign);
 }
 
-Integer Integer::operator/(const Integer &other) const {
-  Integer out;
-  out.mag = mag / other.mag;
-  out.sign = (sign != other.sign);
-  return out;
+void Integer::LeftShift(const ap::Integer &other) {
+  if (other.sign) {
+    mag.RightShift(other.mag);
+  } else {
+    mag.LeftShift(other.mag);
+  }
 }
 
-Integer Integer::operator%(const Integer &other) const {
-  Integer out;
-  out.mag = mag % other.mag;
-  out.sign = sign;
-  return out;
+void Integer::RightShift(const ap::Integer &other) {
+  if (other.sign) {
+    mag.LeftShift(other.mag);
+  } else {
+    mag.RightShift(other.mag);
+  }
 }
 
-Integer Integer::operator<<(const ap::Integer &other) const {
-  Integer out;
-  out.mag = other.sign ? (mag >> other.mag) : (mag << other.mag);
-  out.sign = sign;
-  return out;
-}
-
-Integer Integer::operator>>(const ap::Integer &other) const {
-  Integer out;
-  out.mag = other.sign ? (mag << other.mag) : (mag >> other.mag);
-  out.sign = sign;
-  return out;
-}
-
-Integer Integer::Pow(Integer p) const {
+Integer Integer::Pow(const Integer& p) const {
   Integer out = *this;
 
   if (p > 1) {
     out = Integer(mag.Pow(p.mag));
     out.sign = sign && (p % 2 != 0);
+  } else if (p < 1) {
+    auto counter = p;
+
+    while (counter < 1 && out != 0) {
+      out = out / (*this);
+      counter += 1;
+    }
   }
 
-  while (p < 1 && out != 0) {
-    out = out / (*this);
-    p = p + 1;
-  }
+  return out;
+}
+
+std::tuple<Integer, Integer> Integer::DivMod(const Integer& t) const {
+  auto [Q_u, R_u] = mag.DivMod(t.mag);
+
+  auto out = std::make_tuple<Integer, Integer>(Q_u, R_u);
+
+  std::get<0>(out).sign = (sign != t.sign);  // quotient sign
+  std::get<1>(out).sign = sign;  // remainder sign
 
   return out;
 }

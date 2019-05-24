@@ -11,20 +11,38 @@
   bool operator OP (const T& other) const { return Compare(other) OP 0; } \
   EXTERNAL_OP(bool, OP)
 
-#define MATH_OP(OP) \
-  virtual T operator OP (const T&) const = 0; \
-  EXTERNAL_OP(T, OP)
+#define MATH_OP_INTERNAL(OP) \
+  virtual void operator OP (const T&) = 0;
+
 
 namespace ap {
 
+// T should subclass this Number interface. It's self-referential but works
 template <typename T, typename Primitive>
 class Number {
 public:
-  virtual std::string Print() const = 0;
-  friend std::ostream& operator<<(std::ostream& stream, const T& N) { return stream << N.Print(); }
 
-  // positive for >, 0 for ==, -1 for <
-  virtual int Compare(const T&) const = 0;
+  // ************** pure virtual interface **************
+  virtual std::string Print() const = 0;
+
+  virtual int Compare(const T&) const = 0;  // positive for >, 0 for ==, -1 for <
+
+  virtual std::tuple<T, T> DivMod(const T&) const = 0;  // quotient and remainder
+
+  virtual T Pow(const T&) const = 0;
+
+  MATH_OP_INTERNAL(+=)
+  MATH_OP_INTERNAL(-=)
+  MATH_OP_INTERNAL(*=)
+
+  virtual void LeftShift(const T&) = 0;
+  virtual void RightShift(const T&) = 0;
+
+
+  // ************** generic implementations **************
+  friend std::ostream& operator<<(std::ostream& stream, const T& t) {
+    return stream << t.Print();
+  }
 
   // these generate comparison operator definitions and do not need to be overridden (just implement Compare)
   COMPARATOR(<)
@@ -34,14 +52,52 @@ public:
   COMPARATOR(==)
   COMPARATOR(!=)
 
-  // these generate pure virtual declarations which must be overridden
-  MATH_OP(+)
-  MATH_OP(-)
-  MATH_OP(*)
-  MATH_OP(/)
-  MATH_OP(%)
-  MATH_OP(<<)
-  MATH_OP(>>)
+  T operator+(const T& t) const {
+    auto out = reinterpret_cast<const T&>(*this);
+    out += t;
+    return out;
+  }
+  EXTERNAL_OP(T, +);
+
+  T operator-(const T& t) const {
+    auto out = reinterpret_cast<const T&>(*this);
+    out -= t;
+    return out;
+  }
+  EXTERNAL_OP(T, -);
+
+  T operator*(const T& t) const {
+    auto out = reinterpret_cast<const T&>(*this);
+    out *= t;
+    return out;
+  }
+  EXTERNAL_OP(T, *);
+
+  T operator/(const T& t) const {
+    return std::get<0>(DivMod(t));
+  }
+  EXTERNAL_OP(T, /);
+
+  void operator/=(const T& t) {
+    *this = *this / t;
+  }
+
+  T operator%(const T& t) const {
+    return std::get<1>(DivMod(t));
+  }
+  EXTERNAL_OP(T, %);
+
+  T operator<<(const T& t) const {
+    auto out = reinterpret_cast<const T&>(*this);
+    out.LeftShift(t);
+    return out;
+  }
+
+  T operator>>(const T& t) const {
+    auto out = reinterpret_cast<const T&>(*this);
+    out.RightShift(t);
+    return out;
+  }
 };
 
 }  // namespace ap

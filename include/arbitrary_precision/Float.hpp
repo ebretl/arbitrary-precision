@@ -9,7 +9,7 @@ template <uint32_t digits>
 class Float : public Number<Float<digits>, uint32_t> {
 public:
   Float(const Integer& N) : N(N << digits) {}
-  Float(const uint32_t n) : Float(Integer(n)) {}
+  Float(const int n) : Float(Integer(n)) {}
   Float() : Float(Integer(0)) {}
 
   std::string Print() const override {
@@ -25,46 +25,37 @@ public:
     return N.Compare(other.N);
   }
 
-  Float operator+(const Float &t) const override {
-    Float out;
-    out.N = N + t.N;
+  void operator+=(const Float &t) override {
+    N += t.N;
+  }
+
+  void operator-=(const Float &t) override {
+    N -= t.N;
+  }
+
+  void operator*=(const Float &t) override {
+    N *= t.N;
+    N.RightShift(digits);
+  }
+
+  Float Pow(const Float &t) const {
+    return Float(N.Pow(t.N));
+  }
+
+  std::tuple<Float, Float> DivMod(const Float &t) const override {
+    auto [Q_i, R_i] = (N << digits).DivMod(t.N);
+    std::tuple<Float, Float> out;
+    std::get<0>(out).N = Q_i;
+    std::get<1>(out).N = R_i;
     return out;
   }
 
-  Float operator-(const Float &t) const override {
-    Float out;
-    out.N = N - t.N;
-    return out;
+  void LeftShift(const Float &t) override {
+    N.LeftShift(t.N >> digits);
   }
 
-  Float operator*(const Float &t) const override {
-    Float out;
-    out.N = (N * t.N) >> digits;
-    return out;
-  }
-
-  Float operator/(const Float &t) const override {
-    Float out;
-    out.N = (N << digits) / t.N;
-    return out;
-  }
-
-  Float operator%(const Float &t) const override {
-    Float out;
-    out.N = N % t.N;
-    return out;
-  }
-
-  Float operator<<(const Float &t) const override {
-    Float out;
-    out.N = N << t.N;
-    return out;
-  }
-
-  Float operator>>(const Float &t) const override {
-    Float out;
-    out.N = N >> t.N;
-    return out;
+  void RightShift(const Float &t) override {
+    N.RightShift(t.N >> digits);
   }
 
 private:

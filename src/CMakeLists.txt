@@ -1,7 +1,6 @@
 add_library(arbitrary_precision
         UnsignedInteger.cpp
         Integer.cpp
-        #Float.cpp
 )
 target_link_libraries(arbitrary_precision pthread)
 

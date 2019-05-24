@@ -16,29 +16,26 @@ double time_now() {
 
 int main() {
   using ap::Integer;
-  using Float = ap::Float<1000>;
-
-  auto gen_fn = [](Integer k) {
-    cout << "starting " << k << endl;
-    Float x = (Float(4)/(8*k+1) - Float(2)/(8*k+4) - Float(1)/(8*k+5) - Float(1)/(8*k+6)) / ap::Integer(16).Pow(k);
-    cout << "finished " << k << endl;
-    return x;
-  };
-
-  cout << ap::Integer(16).Pow(209) << endl;
+  using Float = ap::Float<10>;
 
   double t;
+  Integer sum = 1;
+  Integer limit = 100;
+  cout << "limit " << limit << endl;
 
   t = time_now();
-  Float a = 1;
-  Float b = 2;
-  cout << "creating a and b " << time_now() - t << endl;
+  for (Integer x = 1; x <= limit; x += 1) {
+    // cout << "sum " << sum << " add " << x << endl;
+    sum *= x;
+  }
+  cout << time_now() - t << endl;
+  cout << sum << endl;
 
+  sum = 1;
   t = time_now();
-  auto y = a * b;
-  cout << "multiply " << time_now() - t << endl;
-
-  t = time_now();
-  auto y2 = a / b;
-  cout << "divide " << time_now() - t << endl;
+  for (Integer x = 1; x <= limit; x += 1) {
+    sum = sum * x;
+  }
+  cout << time_now() - t << endl;
+  cout << sum << endl;
 }
