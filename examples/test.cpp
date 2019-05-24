@@ -24,7 +24,7 @@ int main() {
   cout << "limit " << limit << endl;
 
   t = time_now();
-  for (Integer x = 1; x <= limit; x += 1) {
+  for (Integer x = 1; x <= limit; x++) {
     // cout << "prod " << sum << " mul " << x << endl;
     sum *= x;
   }

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <tuple>
+#include <numeric>
 
 #include <arbitrary_precision/arbitrary_precision.h>
 
@@ -34,9 +35,7 @@ int main() {
     last_pi = pi;
 
     std::vector<ap::Integer> inputs(16);
-    for (size_t i = 0; i < inputs.size(); i++) {
-      inputs[i] = k + i;
-    }
+    std::iota(inputs.begin(), inputs.end(), k);
     k = k + inputs.size();
 
     pi = pool.MapReduce(gen_fn, add, pi, inputs);

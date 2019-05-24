@@ -98,6 +98,28 @@ public:
     out.RightShift(t);
     return out;
   }
+
+  T& operator++() {
+    *this += 1;
+    return reinterpret_cast<T&>(*this);
+  }
+
+  const T operator++(int) {
+    auto out = reinterpret_cast<const T&>(*this);
+    ++*this;
+    return out;
+  }
+
+  T& operator--() {
+    *this -= 1;
+    return reinterpret_cast<const T&>(*this);
+  }
+
+  const T operator--(int) {
+    auto out = reinterpret_cast<const T&>(*this);
+    --*this;
+    return out;
+  }
 };
 
 }  // namespace ap
