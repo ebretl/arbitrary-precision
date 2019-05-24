@@ -28,11 +28,10 @@ private:
   std::deque<uint8_t> data_;
 
   void Trim();
-  UnsignedInteger Trimmed() const;
 
-  static UnsignedInteger LongMultiply(UnsignedInteger&, UnsignedInteger&);
-  static UnsignedInteger Karatsuba(UnsignedInteger&, UnsignedInteger&);
-  static UnsignedInteger _mult_impl(UnsignedInteger&, UnsignedInteger&);
+  void LongMultiply(UnsignedInteger&);
+  void Karatsuba(UnsignedInteger&);
+  void _mult_impl(UnsignedInteger&);
 };
 
 }  // namespace ap

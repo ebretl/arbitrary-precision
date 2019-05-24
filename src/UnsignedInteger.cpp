@@ -102,94 +102,87 @@ void UnsignedInteger::operator-=(const ap::UnsignedInteger &other) {
   Trim();
 }
 
-UnsignedInteger UnsignedInteger::Karatsuba(UnsignedInteger& x, UnsignedInteger& y) {
-  UnsignedInteger out = 0;
-
+void UnsignedInteger::Karatsuba(UnsignedInteger& y) {
+  UnsignedInteger x(*this);
   x.Trim();
   y.Trim();
 
-  if (x != 0 && y != 0) {
-    auto max_digits = std::max(x.data_.size(), y.data_.size());
-    x.data_.insert(x.data_.end(), max_digits - x.data_.size(), 0u);
-    y.data_.insert(y.data_.end(), max_digits - y.data_.size(), 0u);
+  auto max_digits = std::max(x.data_.size(), y.data_.size());
+  x.data_.insert(x.data_.end(), max_digits - x.data_.size(), 0u);
+  y.data_.insert(y.data_.end(), max_digits - y.data_.size(), 0u);
 
-    if (max_digits == 1) {
-      out = x.data_.front() * y.data_.front();  // unsigned int constructor
-    } else {
-      auto shift = max_digits / 2;
-
-      auto x1 = x >> shift;
-      auto y1 = y >> shift;
-      auto x2 = x - (x1 << shift);
-      auto y2 = y - (y1 << shift);
-      auto x_sum = x1 + x2;
-      auto y_sum = y1 + y2;
-
-      auto F = _mult_impl(x1, y1);
-      auto G = _mult_impl(x2, y2);
-      auto H = _mult_impl(x_sum, y_sum);
-      auto K = H - F - G;
-
-      F.LeftShift(2 * shift);
-      K.LeftShift(shift);
-
-      out += F;
-      out += K;
-      out += G;
-    }
-
-    out.Trim();
-  }
-
-  return out;
-}
-
-UnsignedInteger UnsignedInteger::LongMultiply(UnsignedInteger& x, UnsignedInteger& y) {
-  UnsignedInteger out = 0;
-
-  if (x != 0 && y != 0) {
-    // int i = x.data_.size() - 1;
-    for (auto itx = x.data_.rbegin(); itx != x.data_.rend(); itx++) {
-      UnsignedInteger partial, overflow;
-      partial.data_.clear();
-      overflow.data_.clear();
-
-      for (auto ity = y.data_.rbegin(); ity != y.data_.rend(); ity++) {
-        uint8_t val = (*itx) * (*ity);
-        overflow.data_.push_front(val / 10u);
-        partial.data_.push_front(val % 10u);
-      }
-
-      out.data_.push_front(0u);
-      overflow.data_.push_front(0);
-      partial += overflow;
-      // partial.data_.insert(partial.data_.begin(), i, 0u);
-
-      out += partial;
-    }
-  }
-
-  out.Trim();
-
-  return out;
-}
-
-UnsignedInteger UnsignedInteger::_mult_impl(UnsignedInteger& x, UnsignedInteger& y) {
-  UnsignedInteger out;
-  auto max_size = std::max(x.data_.size(), y.data_.size());
-  if (max_size > 250) {
-    out = Karatsuba(x, y);
+  if (max_digits == 1) {
+    *this = x.data_.front() * y.data_.front();  // primitive constructor
   } else {
-    out = LongMultiply(x, y);
+    auto shift = max_digits / 2;
+
+    auto x1 = x >> shift;
+    auto y1 = y >> shift;
+    auto x2 = x - (x1 << shift);
+    auto y2 = y - (y1 << shift);
+
+    *this = x1 + x2;  // K
+    *this *= (y1 + y2);
+
+    auto F = x1 * y1;
+    auto G = x2 * y2;
+    *this -= F;
+    *this -= G;
+
+    F.data_.insert(F.data_.begin(), 2 * shift, 0);
+
+    data_.insert(data_.begin(), shift, 0);
+
+    *this += F;
+    *this += G;
   }
-  return out;
-  // return LongMultiply(other);
-  // return Karatsuba(*this, other);
+
+  Trim();
+}
+
+void UnsignedInteger::LongMultiply(UnsignedInteger& y) {
+    Trim();
+    y.Trim();
+    const auto x = *this;  // copy
+
+    data_.clear();
+    data_.insert(data_.end(), x.data_.size() + y.data_.size(), 0);
+
+    for (int i = 0; i < x.data_.size(); i++) {
+      for (int j = 0; j < y.data_.size(); j++) {
+        data_[i + j] += x.data_[i] * y.data_[j];
+
+        for (int k = i + j; k < data_.size() && data_[k] >= 10; k++) {
+          data_[k + 1] += data_[k] / 10;
+          data_[k] %= 10;
+        }
+      }
+    }
+
+  Trim();
+}
+
+void UnsignedInteger::_mult_impl(UnsignedInteger& y) {
+  if (*this == 0 || y == 0) {
+    *this = 0;
+  } else if (*this == 1) {
+    *this = y;
+  } else if (y != 1) {
+    Trim();
+    y.Trim();
+    if (data_.size() + y.data_.size() > 400) {
+      Karatsuba(y);
+    } else {
+      LongMultiply(y);
+    }
+    // LongMultiply(y);
+    // Karatsuba(y);
+  }
 }
 
 void UnsignedInteger::operator*=(const UnsignedInteger &other) {
   auto y = other;
-  *this = _mult_impl(*this, y);
+  _mult_impl(y);
 }
 
 void UnsignedInteger::LeftShift(const UnsignedInteger& shift) {

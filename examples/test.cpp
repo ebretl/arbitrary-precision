@@ -16,25 +16,17 @@ double time_now() {
 
 int main() {
   using ap::Integer;
-  using Float = ap::Float<10>;
+  using Float = ap::Float<10000>;
 
   double t;
-  Integer sum = 1;
-  Integer limit = 100;
+  Float sum = 1;
+  Integer limit = 10;
   cout << "limit " << limit << endl;
 
   t = time_now();
   for (Integer x = 1; x <= limit; x += 1) {
-    // cout << "sum " << sum << " add " << x << endl;
+    // cout << "prod " << sum << " mul " << x << endl;
     sum *= x;
-  }
-  cout << time_now() - t << endl;
-  cout << sum << endl;
-
-  sum = 1;
-  t = time_now();
-  for (Integer x = 1; x <= limit; x += 1) {
-    sum = sum * x;
   }
   cout << time_now() - t << endl;
   cout << sum << endl;
