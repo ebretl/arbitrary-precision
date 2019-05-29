@@ -235,7 +235,6 @@ UnsignedInteger UnsignedInteger::Pow(const UnsignedInteger& p) const {
 
   while (counter > 1) {
     auto [q, r] = counter.DivMod(2);
-    // std::cout << *this << " ^ " << p << " : " << "DivMod(" << counter << ", 2) = " << q << ", " << r << std::endl;
 
     if (r == 0) {
       stack.push_back(2);

@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
-project(arbitrary_precision)
+cmake_minimum_required(VERSION 3.2)
+project(simple_bignum VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 

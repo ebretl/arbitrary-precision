@@ -18,16 +18,18 @@ int main() {
   using ap::Integer;
   using Float = ap::Float<10000>;
 
-  double t;
-  Float sum = 1;
-  Integer limit = 10;
-  cout << "limit " << limit << endl;
+  // double t;
+  // Float sum = 1;
+  // Integer limit = 10;
+  // cout << "limit " << limit << endl;
+  //
+  // t = time_now();
+  // for (Integer x = 1; x <= limit; x++) {
+  //   // cout << "prod " << sum << " mul " << x << endl;
+  //   sum *= x;
+  // }
+  // cout << time_now() - t << endl;
+  // cout << sum << endl;
 
-  t = time_now();
-  for (Integer x = 1; x <= limit; x++) {
-    // cout << "prod " << sum << " mul " << x << endl;
-    sum *= x;
-  }
-  cout << time_now() - t << endl;
-  cout << sum << endl;
+  cout << Float(2).Pow(10) << endl;
 }

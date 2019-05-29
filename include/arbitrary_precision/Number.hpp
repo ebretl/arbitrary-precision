@@ -79,7 +79,7 @@ public:
   EXTERNAL_OP(T, /);
 
   void operator/=(const T& t) {
-    *this = *this / t;
+    reinterpret_cast<T&>(*this) = *this / t;
   }
 
   T operator%(const T& t) const {

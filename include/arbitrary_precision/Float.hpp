@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "Number.hpp"
 #include "Integer.h"
 
@@ -14,10 +16,21 @@ public:
 
   std::string Print() const override {
     std::string out = N.Print();
+
+    bool neg = (out[0] == '-');
+    if (neg) {
+      out = out.substr(1, out.size());
+    }
+
     if (digits >= out.size()) {
       out.insert(out.begin(), digits - out.size() + 1, '0');
     }
     out.insert(out.end() - digits, '.');
+
+    if (neg) {
+      out.insert(out.begin(), '-');
+    }
+
     return out;
   }
 
@@ -38,8 +51,43 @@ public:
     N.RightShift(digits);
   }
 
+  Float Pow(const Integer &t) const {
+    Float out = (t == 0) ? 1 : *this;
+    std::vector<char> stack;
+
+    Integer counter = t;
+
+    while (counter > 1) {
+      auto [q, r] = counter.DivMod(2);
+
+      if (r == 0) {
+        stack.push_back(2);
+        counter = std::move(q);
+      } else {
+        stack.push_back(1);
+        counter -= 1;
+      }
+    }
+
+    while (!stack.empty()) {
+      auto& op = stack.back();
+      if (op == 1) {
+        out *= *this;
+      } else {
+        out *= out;
+      }
+      stack.pop_back();
+    }
+
+    return out;
+  }
+
   Float Pow(const Float &t) const {
-    return Float(N.Pow(t.N));
+    return Pow(t.N >> digits);
+  }
+
+  Float Pow(const int t) const {
+    return Pow(Integer(t));
   }
 
   std::tuple<Float, Float> DivMod(const Float &t) const override {
