@@ -14,10 +14,9 @@ double time_now() {
 
 int main() {
   using ap::Integer;
-  using Float = ap::Float<10000>;
+  using Float = ap::Float<5000>;
 
   std::ofstream outfile("output.txt");
-  // outfile.clear();
 
   auto time_start = time_now();
 
@@ -38,7 +37,7 @@ int main() {
     Float res = pows_2[8]/(k10+1);
     res += Float(1)/(k10+9);
     res -= pows_2[5]/(k4+1);
-    res -= Float(1)/(k4*k+3);
+    res -= Float(1)/(k4+3);
     res -= pows_2[6]/(k10+3);
     res -= Float(4)/(k10+5);
     res -= Float(4)/(k10+7);
@@ -82,14 +81,19 @@ int main() {
   while (last_pi != pi) {
     last_pi = pi;
 
-    std::vector<ap::Integer> inputs(4);
+    std::vector<ap::Integer> inputs(16);
     std::iota(inputs.begin(), inputs.end(), k);
     k = k + inputs.size();
 
     pi = pool.MapReduce(gen_fn, add, pi, inputs);
 
-    cout << pi << endl;
-    outfile << pi << "\n";
+    auto pi_str = pi.Print();
+    auto last_pi_str = last_pi.Print();
+    size_t i;
+    for (i = 0; i < pi.Print().size() && pi_str[i] == last_pi_str[i]; i++) {}
+    cout << i << " matching digits" << endl;
+
+    outfile << pi_str << "\n";
   }
 
   outfile << "converged in " << (time_now() - time_start) << endl;
