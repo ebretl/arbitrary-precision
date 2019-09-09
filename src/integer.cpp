@@ -76,8 +76,29 @@ Integer operator+(const Integer& a, const Integer& b) {
   return out;
 }
 Integer& Integer::operator+=(const Integer& t) {
-  magnitude_ += t.magnitude_;
+  if (sign_ == t.sign_) {
+    magnitude_ += t.magnitude_;
+  } else {
+    bool flip_order = magnitude_ < t.magnitude_;
+    if (flip_order) {
+      magnitude_ = t.magnitude_ - magnitude_;
+      sign_ = t.sign_;
+    } else {
+      magnitude_ -= t.magnitude_;
+    }
+
+    sign_ = sign_ && (magnitude_ != 0);
+  }
   return *this;
+}
+
+std::string Integer::DecimalString() const {
+  std::string str = sign_ ? "-" : "";
+  return str + magnitude_.DecimalString();
+}
+
+std::ostream& operator<<(std::ostream& stream, const Integer& t) {
+  return stream << t.DecimalString();
 }
 
 }  // namespace exact

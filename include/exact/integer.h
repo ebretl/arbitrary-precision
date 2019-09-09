@@ -15,6 +15,10 @@ class Integer {
   Integer(int initial);
   Integer(const NonNegativeInteger& other);
 
+  std::string DecimalString() const;
+  friend std::ostream& operator<<(std::ostream& stream,
+                                  const NonNegativeInteger& n);
+
   bool operator==(const Integer& t) const;
   bool operator!=(const Integer& t) const;
   bool operator<(const Integer& t) const;
