@@ -110,9 +110,9 @@ TEST_CASE("basic overflow") {
   x -= bits32;
   REQUIRE(x == bits32);
 
-  //  x *= 2;
-  //  x = x / 2;
-  //  REQUIRE(x == bits32);
+    x *= 2;
+    x = x / 2;
+    REQUIRE(x == bits32);
 }
 
 TEST_CASE("shifting") {
@@ -123,4 +123,16 @@ TEST_CASE("shifting") {
   REQUIRE(x2 > x1);
   x2 >>= 1;
   REQUIRE(x2 == x1);
+}
+
+TEST_CASE("division") {
+  NonNegativeInteger x(12);
+  for (int i = 0; i < 100; i++) {
+    x *= 97;
+  }
+  REQUIRE(x > 1000);
+  for (int i = 0; i < 100; i++) {
+    x /= 97;
+  }
+  REQUIRE(x == 12);
 }

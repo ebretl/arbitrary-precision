@@ -12,7 +12,7 @@ add_library(exact
 
 add_executable(run_tests test/tests.cpp)
 target_link_libraries(run_tests exact)
-set_property(TARGET run_tests PROPERTY COMPILE_FLAGS "-O0")
+set_property(TARGET run_tests PROPERTY COMPILE_FLAGS "-Og")
 
 add_library(arbitrary_precision
         src/UnsignedInteger.cpp

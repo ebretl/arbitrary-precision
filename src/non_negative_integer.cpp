@@ -3,6 +3,7 @@
 #include <exact/exceptions.h>
 #include <algorithm>
 
+
 namespace exact {
 
 constexpr uint64_t bitmask32 = std::numeric_limits<uint32_t>::max();
@@ -216,16 +217,25 @@ std::pair<NonNegativeInteger, NonNegativeInteger> NonNegativeInteger::DivMod(
 
   Q.data_.clear();
   Q.data_.insert(Q.data_.end(), data_.size(), 0u);
-  R.data_.clear();
+
+  // 1100
+  //    1
+  // ----
+  // 1
 
   auto it = data_.rbegin();
   auto it_q = Q.data_.rbegin();
-  for (; it != data_.rend(); ++it, ++it_q) {
-    R.data_.push_front(*it);
-    while (R >= D) {
-      R -= D;
-      ++(*it_q);
+  while (it != data_.rend()) {
+    for (unsigned char bit_counter = 0; bit_counter < 32; bit_counter++) {
+      R <<= 1;
+      R.data_.front() += (*it >> (31u - bit_counter)) & 0x1u;
+      if (R >= D) {
+        *it_q += (0x1u << (31u - bit_counter));
+        R -= D;
+      }
     }
+    ++it;
+    ++it_q;
   }
 
   Q.Trim();
