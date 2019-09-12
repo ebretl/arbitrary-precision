@@ -1,9 +1,9 @@
-#include <iostream>
-#include <tuple>
-#include <numeric>
-#include <random>
 #include <array>
 #include <chrono>
+#include <iostream>
+#include <numeric>
+#include <random>
+#include <tuple>
 
 #include <arbitrary_precision/arbitrary_precision.h>
 
@@ -11,7 +11,9 @@ using std::cout, std::endl;
 
 
 double time_now() {
-  return std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
+  return std::chrono::duration<double>(
+             std::chrono::system_clock::now().time_since_epoch())
+      .count();
 }
 
 int main() {

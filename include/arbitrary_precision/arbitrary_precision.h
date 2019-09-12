@@ -1,5 +1,5 @@
-#include "Number.hpp"
-#include "UnsignedInteger.h"
-#include "Integer.h"
 #include "Float.hpp"
+#include "Integer.h"
+#include "Number.hpp"
 #include "ThreadPool.hpp"
+#include "UnsignedInteger.h"

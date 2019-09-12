@@ -34,11 +34,13 @@ std::string UnsignedInteger::Print() const {
   return out;
 }
 
-int UnsignedInteger::Compare(const ap::UnsignedInteger &other) const {
+int UnsignedInteger::Compare(const ap::UnsignedInteger& other) const {
   int res = 0;
-  for (size_t i = std::max(data_.size(), other.data_.size()); i > 0 && res == 0; i--) {
+  for (size_t i = std::max(data_.size(), other.data_.size()); i > 0 && res == 0;
+       i--) {
     auto j = i - 1;
-    if (j < data_.size() && j < other.data_.size() && data_[j] != other.data_[j]) {
+    if (j < data_.size() && j < other.data_.size() &&
+        data_[j] != other.data_[j]) {
       res = (data_[j] < other.data_[j]) ? -1 : 1;
     } else if (j >= data_.size() && other.data_[j] > 0) {
       res = -1;
@@ -49,7 +51,7 @@ int UnsignedInteger::Compare(const ap::UnsignedInteger &other) const {
   return res;
 }
 
-void UnsignedInteger::operator+=(const ap::UnsignedInteger &other) {
+void UnsignedInteger::operator+=(const ap::UnsignedInteger& other) {
   if (other.data_.size() > data_.size()) {
     data_.insert(data_.end(), other.data_.size() - data_.size(), 0u);
   }
@@ -76,9 +78,10 @@ void UnsignedInteger::operator+=(const ap::UnsignedInteger &other) {
   Trim();
 }
 
-void UnsignedInteger::operator-=(const ap::UnsignedInteger &other) {
+void UnsignedInteger::operator-=(const ap::UnsignedInteger& other) {
   if (other > *this) {
-    std::cerr << "Error: subtracting larger value from UnsignedInteger" << std::endl;
+    std::cerr << "Error: subtracting larger value from UnsignedInteger"
+              << std::endl;
     throw std::exception();
   }
 
@@ -89,7 +92,8 @@ void UnsignedInteger::operator-=(const ap::UnsignedInteger &other) {
   }
 
   if (data_.size() > other.data_.size()) {
-    other_negated.data_.insert(other_negated.data_.end(), data_.size() - other.data_.size(), 9u);
+    other_negated.data_.insert(other_negated.data_.end(),
+                               data_.size() - other.data_.size(), 9u);
   }
 
   other_negated = other_negated + 1u;
@@ -141,23 +145,23 @@ void UnsignedInteger::Karatsuba(UnsignedInteger& y) {
 }
 
 void UnsignedInteger::LongMultiply(UnsignedInteger& y) {
-    Trim();
-    y.Trim();
-    const auto x = *this;  // copy
+  Trim();
+  y.Trim();
+  const auto x = *this;  // copy
 
-    data_.clear();
-    data_.insert(data_.end(), x.data_.size() + y.data_.size(), 0);
+  data_.clear();
+  data_.insert(data_.end(), x.data_.size() + y.data_.size(), 0);
 
-    for (int i = 0; i < x.data_.size(); i++) {
-      for (int j = 0; j < y.data_.size(); j++) {
-        data_[i + j] += x.data_[i] * y.data_[j];
+  for (int i = 0; i < x.data_.size(); i++) {
+    for (int j = 0; j < y.data_.size(); j++) {
+      data_[i + j] += x.data_[i] * y.data_[j];
 
-        for (int k = i + j; k < data_.size() && data_[k] >= 10; k++) {
-          data_[k + 1] += data_[k] / 10;
-          data_[k] %= 10;
-        }
+      for (int k = i + j; k < data_.size() && data_[k] >= 10; k++) {
+        data_[k + 1] += data_[k] / 10;
+        data_[k] %= 10;
       }
     }
+  }
 
   Trim();
 }
@@ -180,7 +184,7 @@ void UnsignedInteger::_mult_impl(UnsignedInteger& y) {
   }
 }
 
-void UnsignedInteger::operator*=(const UnsignedInteger &other) {
+void UnsignedInteger::operator*=(const UnsignedInteger& other) {
   auto y = other;
   _mult_impl(y);
 }
@@ -201,7 +205,8 @@ void UnsignedInteger::RightShift(const UnsignedInteger& shift) {
   }
 }
 
-std::tuple<UnsignedInteger, UnsignedInteger> UnsignedInteger::DivMod(const UnsignedInteger &D) const {
+std::tuple<UnsignedInteger, UnsignedInteger> UnsignedInteger::DivMod(
+    const UnsignedInteger& D) const {
   if (D == 0) {
     std::cerr << "Error: divide by zero" << std::endl;
     throw std::exception();

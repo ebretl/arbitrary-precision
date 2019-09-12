@@ -23,6 +23,21 @@ TEST_CASE("non-negative integer comparable to int") {
   REQUIRE(n <= 42);
 }
 
+TEST_CASE("varying size compares non-negative int") {
+  uint32_t bits32 = 0xFFFFFFFF;
+  auto x1 = NonNegativeInteger(bits32);
+  auto x2 = x1 + 1;
+  auto x3 = x2 + 1;
+
+  REQUIRE(x2 > x1);
+  REQUIRE(x3 > x2);
+  REQUIRE(x3 > x1);
+
+  REQUIRE(x1 < x2);
+  REQUIRE(x2 < x3);
+  REQUIRE(x1 < x3);
+}
+
 TEST_CASE("integer comparable to int") {
   REQUIRE(Integer(0) == 0);
   REQUIRE(Integer(1) == 1);
@@ -82,4 +97,30 @@ TEST_CASE("division nonnegative int") {
   r = std::get<1>(res);
   REQUIRE(q == 10);
   REQUIRE(r == 0);
+}
+
+TEST_CASE("basic overflow") {
+  uint32_t bits32 = 0xFFFFFFFF;
+  NonNegativeInteger x(bits32);
+  x += 1;
+  x -= 1;
+  REQUIRE(x == bits32);
+
+  x *= 2;
+  x -= bits32;
+  REQUIRE(x == bits32);
+
+  //  x *= 2;
+  //  x = x / 2;
+  //  REQUIRE(x == bits32);
+}
+
+TEST_CASE("shifting") {
+  uint32_t bits32 = 0xFFFFFFFF;
+  NonNegativeInteger x1 = bits32;
+  auto x2 = x1 << 1;
+  REQUIRE(x2 == x1 * 2);
+  REQUIRE(x2 > x1);
+  x2 >>= 1;
+  REQUIRE(x2 == x1);
 }

@@ -8,14 +8,18 @@ include_directories(include)
 add_library(exact
         src/integer.cpp
         src/non_negative_integer.cpp
-)
-set_property(TARGET exact PROPERTY COMPILE_FLAGS "-O0 -Wall -Wpedantic")
+        )
 
 add_executable(run_tests test/tests.cpp)
 target_link_libraries(run_tests exact)
+set_property(TARGET run_tests PROPERTY COMPILE_FLAGS "-O0")
 
-#add_library(arbitrary_precision
-#        UnsignedInteger.cpp
-#        Integer.cpp
-#        )
-#target_link_libraries(arbitrary_precision pthread)
+add_library(arbitrary_precision
+        src/UnsignedInteger.cpp
+        src/Integer.cpp
+        )
+target_link_libraries(arbitrary_precision pthread)
+
+set_property(TARGET exact arbitrary_precision PROPERTY COMPILE_FLAGS "-O3 -Wall -Wpedantic")
+
+add_subdirectory(examples)

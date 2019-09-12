@@ -1,7 +1,7 @@
-#include <iostream>
-#include <tuple>
-#include <numeric>
 #include <fstream>
+#include <iostream>
+#include <numeric>
+#include <tuple>
 
 #include <arbitrary_precision/arbitrary_precision.h>
 
@@ -9,7 +9,9 @@ using std::cout, std::endl;
 
 
 double time_now() {
-  return std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
+  return std::chrono::duration<double>(
+             std::chrono::system_clock::now().time_since_epoch())
+      .count();
 }
 
 int main() {
@@ -24,23 +26,25 @@ int main() {
   Float pi = 0;
 
   // auto gen_fn = [](Integer k) {
-  //   return (Float(4)/(8*k+1) - Float(2)/(8*k+4) - Float(1)/(8*k+5) - Float(1)/(8*k+6)) / ap::Integer(16).Pow(k);
+  //   return (Float(4)/(8*k+1) - Float(2)/(8*k+4) - Float(1)/(8*k+5) -
+  //   Float(1)/(8*k+6)) / ap::Integer(16).Pow(k);
   // };
 
   std::vector<Float> pows_2(17);
   std::iota(pows_2.begin(), pows_2.end(), 0);
-  std::transform(pows_2.begin(), pows_2.end(), pows_2.begin(), [](Float x){ return Float(2).Pow(x); });
+  std::transform(pows_2.begin(), pows_2.end(), pows_2.begin(),
+                 [](Float x) { return Float(2).Pow(x); });
 
   auto gen_fn = [&pows_2](Integer k) -> Float {
     Integer k4 = k * 4;
     Integer k10 = k * 10;
-    Float res = pows_2[8]/(k10+1);
-    res += Float(1)/(k10+9);
-    res -= pows_2[5]/(k4+1);
-    res -= Float(1)/(k4+3);
-    res -= pows_2[6]/(k10+3);
-    res -= Float(4)/(k10+5);
-    res -= Float(4)/(k10+7);
+    Float res = pows_2[8] / (k10 + 1);
+    res += Float(1) / (k10 + 9);
+    res -= pows_2[5] / (k4 + 1);
+    res -= Float(1) / (k4 + 3);
+    res -= pows_2[6] / (k10 + 3);
+    res -= Float(4) / (k10 + 5);
+    res -= Float(4) / (k10 + 7);
     res /= (pows_2[10].Pow(k) * pows_2[6]);
     if (k % 2 != 0) {
       res *= -1;
@@ -71,9 +75,7 @@ int main() {
   //   return x;
   // };
 
-  auto add = [](const Float& x1, const Float& x2) {
-    return x1 + x2;
-  };
+  auto add = [](const Float& x1, const Float& x2) { return x1 + x2; };
 
   ap::ThreadPool pool;
 
@@ -90,7 +92,8 @@ int main() {
     auto pi_str = pi.Print();
     auto last_pi_str = last_pi.Print();
     size_t i;
-    for (i = 0; i < pi.Print().size() && pi_str[i] == last_pi_str[i]; i++) {}
+    for (i = 0; i < pi_str.size() && pi_str[i] == last_pi_str[i]; i++) {
+    }
     cout << i << " matching digits" << endl;
 
     outfile << pi_str << "\n";

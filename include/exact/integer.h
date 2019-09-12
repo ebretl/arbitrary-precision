@@ -36,10 +36,6 @@ class Integer {
   Integer& operator-=(const Integer& t);
   Integer& operator*=(const Integer& t);
   Integer& operator/=(const Integer& t);
-
-
-// private:
-//  friend int compare(const Integer& a, const Integer& b);
 };
 
 }  // namespace exact

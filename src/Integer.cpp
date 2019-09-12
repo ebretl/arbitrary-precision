@@ -9,13 +9,13 @@ Integer::Integer(int32_t x) {
 
 Integer::Integer() : Integer(0) {}
 
-Integer::Integer(const UnsignedInteger& other) : mag(other), sign(false) {}
+Integer::Integer(const UnsignedInteger &other) : mag(other), sign(false) {}
 
 std::string Integer::Print() const {
   return std::string(sign ? "-" : "") + mag.Print();
 }
 
-int Integer::Compare(const Integer& other) const {
+int Integer::Compare(const Integer &other) const {
   if (!sign && !other.sign) {
     // + +
     return mag.Compare(other.mag);
@@ -74,7 +74,7 @@ void Integer::RightShift(const ap::Integer &other) {
   }
 }
 
-Integer Integer::Pow(const Integer& p) const {
+Integer Integer::Pow(const Integer &p) const {
   Integer out = *this;
 
   if (p > 1) {
@@ -92,13 +92,13 @@ Integer Integer::Pow(const Integer& p) const {
   return out;
 }
 
-std::tuple<Integer, Integer> Integer::DivMod(const Integer& t) const {
+std::tuple<Integer, Integer> Integer::DivMod(const Integer &t) const {
   auto [Q_u, R_u] = mag.DivMod(t.mag);
 
   auto out = std::make_tuple<Integer, Integer>(Q_u, R_u);
 
   std::get<0>(out).sign = (sign != t.sign);  // quotient sign
-  std::get<1>(out).sign = sign;  // remainder sign
+  std::get<1>(out).sign = sign;              // remainder sign
 
   return out;
 }

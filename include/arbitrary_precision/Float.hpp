@@ -2,15 +2,15 @@
 
 #include <vector>
 
-#include "Number.hpp"
 #include "Integer.h"
+#include "Number.hpp"
 
 namespace ap {
 
 template <uint32_t digits>
 class Float : public Number<Float<digits>, uint32_t> {
-public:
-  Float(const Integer& N) : N(N << digits) {}
+ public:
+  Float(const Integer &N) : N(N << digits) {}
   Float(const int n) : Float(Integer(n)) {}
   Float() : Float(Integer(0)) {}
 
@@ -34,17 +34,11 @@ public:
     return out;
   }
 
-  int Compare(const Float &other) const override {
-    return N.Compare(other.N);
-  }
+  int Compare(const Float &other) const override { return N.Compare(other.N); }
 
-  void operator+=(const Float &t) override {
-    N += t.N;
-  }
+  void operator+=(const Float &t) override { N += t.N; }
 
-  void operator-=(const Float &t) override {
-    N -= t.N;
-  }
+  void operator-=(const Float &t) override { N -= t.N; }
 
   void operator*=(const Float &t) override {
     N *= t.N;
@@ -70,7 +64,7 @@ public:
     }
 
     while (!stack.empty()) {
-      auto& op = stack.back();
+      auto &op = stack.back();
       if (op == 1) {
         out *= *this;
       } else {
@@ -82,13 +76,9 @@ public:
     return out;
   }
 
-  Float Pow(const Float &t) const {
-    return Pow(t.N >> digits);
-  }
+  Float Pow(const Float &t) const { return Pow(t.N >> digits); }
 
-  Float Pow(const int t) const {
-    return Pow(Integer(t));
-  }
+  Float Pow(const int t) const { return Pow(Integer(t)); }
 
   std::tuple<Float, Float> DivMod(const Float &t) const override {
     auto [Q_i, R_i] = (N << digits).DivMod(t.N);
@@ -98,15 +88,11 @@ public:
     return out;
   }
 
-  void LeftShift(const Float &t) override {
-    N.LeftShift(t.N >> digits);
-  }
+  void LeftShift(const Float &t) override { N.LeftShift(t.N >> digits); }
 
-  void RightShift(const Float &t) override {
-    N.RightShift(t.N >> digits);
-  }
+  void RightShift(const Float &t) override { N.RightShift(t.N >> digits); }
 
-private:
+ private:
   Integer N;
 };
 

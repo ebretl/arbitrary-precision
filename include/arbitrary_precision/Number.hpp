@@ -5,14 +5,13 @@
 
 
 #define EXTERNAL_OP(RET, OP) \
-  friend RET operator OP (Primitive x, const T& other) { return T(x) OP other; }
+  friend RET operator OP(Primitive x, const T& other) { return T(x) OP other; }
 
-#define COMPARATOR(OP) \
-  bool operator OP (const T& other) const { return Compare(other) OP 0; } \
+#define COMPARATOR(OP)                                                   \
+  bool operator OP(const T& other) const { return Compare(other) OP 0; } \
   EXTERNAL_OP(bool, OP)
 
-#define MATH_OP_INTERNAL(OP) \
-  virtual void operator OP (const T&) = 0;
+#define MATH_OP_INTERNAL(OP) virtual void operator OP(const T&) = 0;
 
 
 namespace ap {
@@ -20,14 +19,15 @@ namespace ap {
 // T should subclass this Number interface. It's self-referential but works
 template <typename T, typename Primitive>
 class Number {
-public:
-
+ public:
   // ************** pure virtual interface **************
   virtual std::string Print() const = 0;
 
-  virtual int Compare(const T&) const = 0;  // positive for >, 0 for ==, -1 for <
+  virtual int Compare(
+      const T&) const = 0;  // positive for >, 0 for ==, -1 for <
 
-  virtual std::tuple<T, T> DivMod(const T&) const = 0;  // quotient and remainder
+  virtual std::tuple<T, T> DivMod(
+      const T&) const = 0;  // quotient and remainder
 
   virtual T Pow(const T&) const = 0;
 
@@ -44,7 +44,8 @@ public:
     return stream << t.Print();
   }
 
-  // these generate comparison operator definitions and do not need to be overridden (just implement Compare)
+  // these generate comparison operator definitions and do not need to be
+  // overridden (just implement Compare)
   COMPARATOR(<)
   COMPARATOR(<=)
   COMPARATOR(>)
@@ -73,18 +74,12 @@ public:
   }
   EXTERNAL_OP(T, *);
 
-  T operator/(const T& t) const {
-    return std::get<0>(DivMod(t));
-  }
+  T operator/(const T& t) const { return std::get<0>(DivMod(t)); }
   EXTERNAL_OP(T, /);
 
-  void operator/=(const T& t) {
-    reinterpret_cast<T&>(*this) = *this / t;
-  }
+  void operator/=(const T& t) { reinterpret_cast<T&>(*this) = *this / t; }
 
-  T operator%(const T& t) const {
-    return std::get<1>(DivMod(t));
-  }
+  T operator%(const T& t) const { return std::get<1>(DivMod(t)); }
   EXTERNAL_OP(T, %);
 
   T operator<<(const T& t) const {

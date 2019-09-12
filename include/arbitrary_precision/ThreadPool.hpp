@@ -1,22 +1,21 @@
 #pragma once
 
-#include <functional>
-#include <thread>
 #include <atomic>
-#include <future>
 #include <deque>
+#include <functional>
+#include <future>
+#include <thread>
 #include <type_traits>
 
 namespace ap {
 
 namespace _thread_pool_metafuncs {
 
-std::tuple<> get_each_arg(int i) {
-  return std::make_tuple<>();
-}
+std::tuple<> get_each_arg(int i) { return std::make_tuple<>(); }
 
 template <typename T0, typename... Ts>
-std::tuple<T0, Ts...> get_each_arg(int i, const std::vector<T0>& in0, const std::vector<Ts>&... ins) {
+std::tuple<T0, Ts...> get_each_arg(int i, const std::vector<T0>& in0,
+                                   const std::vector<Ts>&... ins) {
   return std::tuple_cat(std::make_tuple(in0[i]), get_each_arg(i, ins...));
 }
 
@@ -26,12 +25,14 @@ size_t min_list_size(const std::vector<T>& v) {
 }
 
 template <typename T0, typename... Ts>
-size_t min_list_size(const std::vector<T0>& vec0, const std::vector<Ts>&... vecs) {
+size_t min_list_size(const std::vector<T0>& vec0,
+                     const std::vector<Ts>&... vecs) {
   return std::min(vec0.size(), min_list_size(vecs...));
 }
 
 template <typename... _Args>
-std::vector<std::tuple<_Args...>> arg_lists_to_star_args_list(const std::vector<_Args>&... arg_lists) {
+std::vector<std::tuple<_Args...>> arg_lists_to_star_args_list(
+    const std::vector<_Args>&... arg_lists) {
   std::vector<std::tuple<_Args...>> star_args_list(min_list_size(arg_lists...));
 
   for (size_t i = 0; i < star_args_list.size(); i++) {
@@ -45,14 +46,13 @@ std::vector<std::tuple<_Args...>> arg_lists_to_star_args_list(const std::vector<
 
 
 class ThreadPool {
-public:
+ public:
   ThreadPool(size_t n_threads) : free_threads_(n_threads) {}
   ThreadPool() : ThreadPool(std::thread::hardware_concurrency()) {}
 
   template <typename _Fn, typename... _Args>
-  std::vector<std::result_of_t<_Fn(_Args...)>> StarMap(const _Fn& f,
-      const std::vector<std::tuple<_Args...>>& args_list) {
-
+  std::vector<std::result_of_t<_Fn(_Args...)>> StarMap(
+      const _Fn& f, const std::vector<std::tuple<_Args...>>& args_list) {
     using _Res = std::result_of_t<_Fn(_Args...)>;
 
     std::vector<_Res> out(args_list.size());
@@ -88,18 +88,23 @@ public:
   }
 
   template <typename _Fn, typename... _Args>
-  std::vector<std::result_of_t<_Fn(_Args...)>> Map(const _Fn& f, const std::vector<_Args>&... arg_lists) {
-    auto star_args_list = _thread_pool_metafuncs::arg_lists_to_star_args_list(arg_lists...);
+  std::vector<std::result_of_t<_Fn(_Args...)>> Map(
+      const _Fn& f, const std::vector<_Args>&... arg_lists) {
+    auto star_args_list =
+        _thread_pool_metafuncs::arg_lists_to_star_args_list(arg_lists...);
     return StarMap(f, star_args_list);
   }
 
-  template <typename AccType, typename MapFn, typename ReduceFn, typename... MapArgTypes>
-  AccType StarMapReduce(const MapFn& map_fn, const ReduceFn& reduce_fn, AccType accumulator,
-                        const std::vector<std::tuple<MapArgTypes...>>& map_args_list) {
+  template <typename AccType, typename MapFn, typename ReduceFn,
+            typename... MapArgTypes>
+  AccType StarMapReduce(
+      const MapFn& map_fn, const ReduceFn& reduce_fn, AccType accumulator,
+      const std::vector<std::tuple<MapArgTypes...>>& map_args_list) {
     auto acc_ptr = &accumulator;
     std::mutex acc_mutex;
 
-    std::function map_reduce_func = [&, acc_ptr] (const MapArgTypes&... map_args) {
+    std::function map_reduce_func = [&,
+                                     acc_ptr](const MapArgTypes&... map_args) {
       auto map_result = map_fn(map_args...);
 
       std::lock_guard lock(acc_mutex);
@@ -113,14 +118,17 @@ public:
     return accumulator;
   }
 
-  template <typename AccType, typename MapFn, typename ReduceFn, typename... MapArgTypes>
-  AccType MapReduce(const MapFn& map_fn, const ReduceFn& reduce_fn, const AccType& accumulator,
+  template <typename AccType, typename MapFn, typename ReduceFn,
+            typename... MapArgTypes>
+  AccType MapReduce(const MapFn& map_fn, const ReduceFn& reduce_fn,
+                    const AccType& accumulator,
                     const std::vector<MapArgTypes>&... map_arg_lists) {
-    auto star_args_list = _thread_pool_metafuncs::arg_lists_to_star_args_list(map_arg_lists...);
+    auto star_args_list =
+        _thread_pool_metafuncs::arg_lists_to_star_args_list(map_arg_lists...);
     return StarMapReduce(map_fn, reduce_fn, accumulator, star_args_list);
   }
 
-private:
+ private:
   int free_threads_;
 
   std::mutex mutex_;

@@ -22,14 +22,10 @@ class NonNegativeInteger {
   bool operator>(const NonNegativeInteger& t) const;
   bool operator>=(const NonNegativeInteger& t) const;
 
-  friend NonNegativeInteger operator+(const NonNegativeInteger& a,
-                                      const NonNegativeInteger& b);
-  friend NonNegativeInteger operator-(const NonNegativeInteger& a,
-                                      const NonNegativeInteger& b);
-  friend NonNegativeInteger operator*(const NonNegativeInteger& a,
-                                      const NonNegativeInteger& b);
-  friend NonNegativeInteger operator/(const NonNegativeInteger& a,
-                                      const NonNegativeInteger& b);
+  NonNegativeInteger operator+(const NonNegativeInteger& t) const;
+  NonNegativeInteger operator-(const NonNegativeInteger& t) const;
+  NonNegativeInteger operator*(const NonNegativeInteger& t) const;
+  NonNegativeInteger operator/(const NonNegativeInteger& t) const;
   std::pair<NonNegativeInteger, NonNegativeInteger> DivMod(
       const NonNegativeInteger& d) const;
 
@@ -38,6 +34,10 @@ class NonNegativeInteger {
   NonNegativeInteger& operator*=(const NonNegativeInteger& t);
   NonNegativeInteger& operator/=(const NonNegativeInteger& t);
 
+  void operator<<=(unsigned int bits);
+  void operator>>=(unsigned int bits);
+  NonNegativeInteger operator<<(unsigned int bits);
+  NonNegativeInteger operator>>(unsigned int bits);
 
  private:
   std::deque<uint32_t> data_;  // magnitude storage (base 2^32)

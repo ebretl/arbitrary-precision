@@ -6,15 +6,15 @@
 namespace ap {
 
 class Integer : public Number<Integer, int32_t> {
-public:
+ public:
   Integer();
   Integer(int32_t x);
-  Integer(const UnsignedInteger&);
+  Integer(const UnsignedInteger &);
 
   std::string Print() const override;
   int Compare(const Integer &t) const override;
-  std::tuple<Integer, Integer> DivMod(const Integer&) const override;
-  Integer Pow(const Integer&) const override;
+  std::tuple<Integer, Integer> DivMod(const Integer &) const override;
+  Integer Pow(const Integer &) const override;
 
   void operator+=(const Integer &t) override;
   void operator-=(const Integer &t) override;
@@ -22,7 +22,7 @@ public:
   void LeftShift(const Integer &t) override;
   void RightShift(const Integer &t) override;
 
-private:
+ private:
   UnsignedInteger mag;
   bool sign;
 };

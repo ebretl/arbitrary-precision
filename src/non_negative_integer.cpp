@@ -1,7 +1,7 @@
 #include <exact/non_negative_integer.h>
-//#include <vector>
-#include <algorithm>
 
+#include <exact/exceptions.h>
+#include <algorithm>
 
 namespace exact {
 
@@ -41,8 +41,10 @@ int compare(const NonNegativeInteger& a, const NonNegativeInteger& b) {
   size_t counter = std::max(a_size, b_size);
 
   while (mag_compare == 0 && counter > 0) {
-    if (counter <= a_size && counter <= b_size && *a_it != *b_it) {
-      mag_compare = (*a_it < *b_it) ? -1 : 1;
+    if (counter <= a_size && counter <= b_size) {
+      if (*a_it != *b_it) {
+        mag_compare = (*a_it < *b_it) ? -1 : 1;
+      }
       ++a_it;
       ++b_it;
     } else if (counter > a_size && *b_it > 0) {
@@ -66,10 +68,10 @@ void NonNegativeInteger::Trim() {
   data_.erase(first_nonzero_it + 1, data_.end());
 }
 
-NonNegativeInteger operator+(const NonNegativeInteger& a,
-                             const NonNegativeInteger& b) {
-  NonNegativeInteger out = a;
-  out += b;
+NonNegativeInteger NonNegativeInteger::operator+(
+    const NonNegativeInteger& t) const {
+  NonNegativeInteger out = *this;
+  out += t;
   return out;
 }
 
@@ -79,14 +81,14 @@ NonNegativeInteger& NonNegativeInteger::operator+=(
     data_.insert(data_.end(), t.data_.size() - data_.size(), 0);
   }
 
-  uint32_t carry = 0;
+  uint64_t carry = 0;
   auto it = data_.begin();
   auto it_other = t.data_.begin();
   for (; it != data_.end(); it++) {
-    uint64_t val = carry + *it;
+    uint64_t val = carry + static_cast<uint64_t>(*it);
     if (it_other != t.data_.end()) {
-      val += *it_other;
-      it_other++;
+      val += static_cast<uint64_t>(*it_other);
+      ++it_other;
     }
 
     carry = val >> 32u;
@@ -101,19 +103,18 @@ NonNegativeInteger& NonNegativeInteger::operator+=(
   return *this;
 }
 
-NonNegativeInteger operator-(const NonNegativeInteger& a,
-                             const NonNegativeInteger& b) {
-  NonNegativeInteger out = a;
-  out -= b;
+NonNegativeInteger NonNegativeInteger::operator-(
+    const NonNegativeInteger& t) const {
+  NonNegativeInteger out = *this;
+  out -= t;
   return out;
 }
 
 NonNegativeInteger& NonNegativeInteger::operator-=(
     const NonNegativeInteger& t) {
   if (t > *this) {
-    std::cerr << "Error: subtracting larger value from UnsignedInteger"
-              << std::endl;
-    throw std::exception();
+    throw exact::OperationException(
+        "subtracting larger value from UnsignedInteger");
   }
 
   NonNegativeInteger t_negated;
@@ -138,27 +139,30 @@ NonNegativeInteger& NonNegativeInteger::operator-=(
   return *this;
 }
 
-NonNegativeInteger operator*(const NonNegativeInteger& a,
-                             const NonNegativeInteger& b) {
-  if (a == 0 || b == 0) {
+NonNegativeInteger NonNegativeInteger::operator*(
+    const NonNegativeInteger& t) const {
+  if (*this == 0 || t == 0) {
     return NonNegativeInteger(0);
-  } else if (a == 1) {
-    return b;
-  } else if (b == 1) {
-    return a;
+  } else if (*this == 1) {
+    return t;
+  } else if (t == 1) {
+    return *this;
   } else {
     //    if (data_.size() + y.data_.size() > 400) {
     //      Karatsuba(y);
     //    } else {
     //      LongMultiply(y);
     //    }
-    return _long_multiply(a, b);
+    return _long_multiply(*this, t);
     // Karatsuba(y);
   }
 }
 
 NonNegativeInteger& NonNegativeInteger::operator*=(
-    const NonNegativeInteger& t) {}
+    const NonNegativeInteger& t) {
+  *this = *this * t;
+  return *this;
+}
 
 NonNegativeInteger _long_multiply(const NonNegativeInteger& a,
                                   const NonNegativeInteger& b) {
@@ -167,19 +171,21 @@ NonNegativeInteger _long_multiply(const NonNegativeInteger& a,
 
   NonNegativeInteger prod;
   prod.data_.clear();
-  prod.data_.insert(prod.data_.end(), a.data_.size() + b.data_.size(), 0);
+  prod.data_.insert(prod.data_.end(), a_size + b_size, 0);
 
   for (size_t i = 0; i < a_size; i++) {
     for (size_t j = 0; j < b_size; j++) {
-      uint64_t value = a.data_[i] * b.data_[j];
+      uint64_t value =
+          static_cast<uint64_t>(a.data_[i]) * static_cast<uint64_t>(b.data_[j]);
       uint64_t carry = value >> 32u;
       value = (value & bitmask32) + prod.data_[i + j];
       carry += value >> 32u;
       prod.data_[i + j] = value & bitmask32;
 
       for (size_t k = i + j; k < a_size + b_size && carry != 0; k++) {
-        prod.data_[k + 1] += carry;
-        carry >>= 32u;
+        value = static_cast<uint64_t>(prod.data_[k + 1]) + carry;
+        prod.data_[k + 1] = (value & bitmask32);
+        carry = (carry + (value >> 32u)) >> 32u;
       }
     }
   }
@@ -188,19 +194,21 @@ NonNegativeInteger _long_multiply(const NonNegativeInteger& a,
   return prod;
 }
 
-NonNegativeInteger operator/(const NonNegativeInteger& n,
-                             const NonNegativeInteger& d) {
-  return std::get<0>(n.DivMod(d));
+NonNegativeInteger NonNegativeInteger::operator/(
+    const NonNegativeInteger& t) const {
+  return std::get<0>(DivMod(t));
 }
 
 NonNegativeInteger& NonNegativeInteger::operator/=(
-    const NonNegativeInteger& t) {}
+    const NonNegativeInteger& t) {
+  *this = *this / t;
+  return *this;
+}
 
 std::pair<NonNegativeInteger, NonNegativeInteger> NonNegativeInteger::DivMod(
     const NonNegativeInteger& D) const {
   if (D == 0) {
-    std::cerr << "Error: divide by zero" << std::endl;
-    throw std::exception();
+    throw exact::OperationException("divide by zero");
   }
 
   auto out = std::make_pair<NonNegativeInteger, NonNegativeInteger>(0, 0);
@@ -225,24 +233,83 @@ std::pair<NonNegativeInteger, NonNegativeInteger> NonNegativeInteger::DivMod(
 }
 
 std::string NonNegativeInteger::DecimalString() const {
-  std::deque<NonNegativeInteger> ds = {10, 1};
+  std::deque<NonNegativeInteger> ds = {1};
   NonNegativeInteger n = *this;
-  while (n >= ds.front()) {
+  while (n > ds.front()) {
     ds.push_front(ds.front() * 10);
   }
-  ds.pop_front();
+  if (ds.size() > 1 && ds.front() > n) {
+    ds.pop_front();
+  }
 
   std::string str;
-  for (const NonNegativeInteger& d : ds) {
-    auto [quotient, rem] = n.DivMod(d);
-    n = std::move(rem);
-    str.push_back('0' + quotient.data_[0]);
+  while (!ds.empty()) {
+    str.push_back('0');
+    while (n >= ds.front()) {
+      n -= ds.front();
+      ++str.back();
+    }
+    ds.pop_front();
   }
+
   return str;
 }
 
 std::ostream& operator<<(std::ostream& stream, const NonNegativeInteger& n) {
   return stream << n.DecimalString();
+}
+
+void NonNegativeInteger::operator<<=(unsigned int bits) {
+  if (bits >= 32) {
+    data_.insert(data_.begin(), bits / 32u, 0);
+    bits = bits % 32;
+  }
+
+  data_.push_back(0);
+  auto big_it = data_.rbegin();
+  auto small_it = big_it + 1;
+  while (small_it != data_.rend()) {
+    *big_it += (*small_it >> (32u - bits));
+    *small_it <<= bits;
+    big_it = small_it;
+    ++small_it;
+  }
+  if (data_.back() == 0) {
+    data_.pop_back();
+  }
+}
+
+void NonNegativeInteger::operator>>=(unsigned int bits) {
+  if (bits >= 32) {
+    data_.erase(data_.begin(), data_.begin() + (bits / 32u));
+    bits = bits % 32;
+  }
+
+  data_.front() >>= bits;
+
+  auto small_it = data_.begin();
+  auto big_it = small_it + 1;
+  while (big_it != data_.end()) {
+    *small_it += (*big_it << (32u - bits));
+    *big_it >>= bits;
+    small_it = big_it;
+    ++big_it;
+  }
+  if (data_.back() == 0) {
+    data_.pop_back();
+  }
+}
+
+NonNegativeInteger NonNegativeInteger::operator<<(unsigned int bits) {
+  NonNegativeInteger copy(*this);
+  copy <<= bits;
+  return copy;
+}
+
+NonNegativeInteger NonNegativeInteger::operator>>(unsigned int bits) {
+  NonNegativeInteger copy(*this);
+  copy >>= bits;
+  return copy;
 }
 
 }  // namespace exact
