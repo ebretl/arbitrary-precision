@@ -9,6 +9,9 @@ Integer::Integer() : Integer(0) {}
 Integer::Integer(const NonNegativeInteger& other)
     : magnitude_(other), sign_(false) {}
 
+Integer::Integer(const NonNegativeInteger& other, bool sign)
+    : magnitude_(other), sign_(sign) {}
+
 Integer::Integer(int initial)
     : magnitude_(std::abs(initial)), sign_(initial < 0) {}
 
@@ -70,11 +73,12 @@ bool Integer::operator>=(const Integer& t) const {
   }
 }
 
-Integer operator+(const Integer& a, const Integer& b) {
-  Integer out = a;
-  out += b;
+Integer Integer::operator+(const Integer& t) const {
+  Integer out = *this;
+  out += t;
   return out;
 }
+
 Integer& Integer::operator+=(const Integer& t) {
   if (sign_ == t.sign_) {
     magnitude_ += t.magnitude_;
@@ -92,13 +96,52 @@ Integer& Integer::operator+=(const Integer& t) {
   return *this;
 }
 
-std::string Integer::DecimalString() const {
-  std::string str = sign_ ? "-" : "";
-  return str + magnitude_.DecimalString();
+Integer Integer::operator-(const Integer& t) const {
+  Integer out = *this;
+  out -= t;
+  return out;
+}
+
+Integer& Integer::operator-=(const Integer& t) {
+  Integer t2(t.magnitude_, !t.sign_);
+  return *this += t2;
+}
+
+Integer Integer::operator*(const Integer& t) const {
+  return Integer(magnitude_ * t.magnitude_, sign_ != t.sign_);
+}
+
+Integer& Integer::operator*=(const Integer& t) {
+  magnitude_ *= t.magnitude_;
+  sign_ = (sign_ != t.sign_);
+  return *this;
+}
+
+std::pair<Integer, Integer> DivMod(const Integer& N, const Integer& D) {
+  auto [Q_pos, R_pos] = DivMod(N.magnitude_, D.magnitude_);
+  // signs python-style
+  return std::make_pair(Integer(Q_pos, N.sign_ != D.sign_),
+                        Integer((N.sign_ == D.sign_) ? R_pos : D - R_pos));
+}
+
+Integer& Integer::operator/=(const Integer& t) {
+  magnitude_ /= t.magnitude_;
+  sign_ = (sign_ != t.sign_);
+  return *this;
+}
+
+Integer Integer::operator/(const Integer& t) const {
+  return std::get<0>(DivMod(*this, t));
+}
+
+
+std::string to_string(const Integer& t) {
+  std::string str = t.sign_ ? "-" : "";
+  return str + to_string(t.magnitude_);
 }
 
 std::ostream& operator<<(std::ostream& stream, const Integer& t) {
-  return stream << t.DecimalString();
+  return stream << to_string(t);
 }
 
 }  // namespace exact

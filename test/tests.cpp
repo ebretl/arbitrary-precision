@@ -72,9 +72,9 @@ TEST_CASE("add mixed ints") {
 }
 
 TEST_CASE("print small") {
-  REQUIRE(NonNegativeInteger(5).DecimalString() == "5");
-  REQUIRE(Integer(10).DecimalString() == "10");
-  REQUIRE(Integer(-2044).DecimalString() == "-2044");
+  REQUIRE(to_string(NonNegativeInteger(5)) == "5");
+  REQUIRE(to_string(Integer(10)) == "10");
+  REQUIRE(to_string(Integer(-2044)) == "-2044");
 }
 
 TEST_CASE("NonNegativeInteger multiply") {
@@ -86,13 +86,13 @@ TEST_CASE("NonNegativeInteger multiply") {
 
 TEST_CASE("division nonnegative int") {
   NonNegativeInteger q, r;
-  auto res = NonNegativeInteger(13).DivMod(3);
+  auto res = DivMod(13, NonNegativeInteger(3));
   q = std::get<0>(res);
   r = std::get<1>(res);
   REQUIRE(q == 4);
   REQUIRE(r == 1);
 
-  res = NonNegativeInteger(100).DivMod(10);
+  res = DivMod(NonNegativeInteger(100), 10);
   q = std::get<0>(res);
   r = std::get<1>(res);
   REQUIRE(q == 10);
@@ -110,9 +110,9 @@ TEST_CASE("basic overflow") {
   x -= bits32;
   REQUIRE(x == bits32);
 
-    x *= 2;
-    x = x / 2;
-    REQUIRE(x == bits32);
+  x *= 2;
+  x = x / 2;
+  REQUIRE(x == bits32);
 }
 
 TEST_CASE("shifting") {
@@ -135,4 +135,26 @@ TEST_CASE("division") {
     x /= 97;
   }
   REQUIRE(x == 12);
+}
+
+TEST_CASE("negative zero") {
+  Integer neg0(NonNegativeInteger(0), true);
+
+  REQUIRE(neg0 + 1 == 1);
+  REQUIRE(Integer(1) + neg0 == 1);
+  REQUIRE(neg0 - 1 == -1);
+  REQUIRE(Integer(1) - neg0 == 1);
+
+  REQUIRE(neg0 * 1 == 0);
+  REQUIRE(Integer(1) * neg0 == 0);
+  REQUIRE(neg0 / 5 == 0);
+  //  REQUIRE(neg0 % 5 == 0);
+}
+
+TEST_CASE("shift mult") {
+  NonNegativeInteger a = 1;
+  a <<= 64;
+  auto a_sqr = a * a;
+  REQUIRE(to_string(a) == "18446744073709551616");
+  REQUIRE(to_string(a_sqr) == "340282366920938463463374607431768211456");
 }

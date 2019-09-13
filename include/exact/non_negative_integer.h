@@ -4,6 +4,8 @@
 #include <deque>
 #include <iostream>
 
+#include "type_utils.h"
+
 namespace exact {
 
 class NonNegativeInteger {
@@ -11,31 +13,14 @@ class NonNegativeInteger {
   NonNegativeInteger();
   NonNegativeInteger(unsigned int initial);
 
-  std::string DecimalString() const;
-  friend std::ostream& operator<<(std::ostream& stream,
-                                  const NonNegativeInteger& n);
+  EXACT_DECLARE_PRINT_OPERATORS(NonNegativeInteger)
 
-  bool operator==(const NonNegativeInteger& t) const;
-  bool operator!=(const NonNegativeInteger& t) const;
-  bool operator<(const NonNegativeInteger& t) const;
-  bool operator<=(const NonNegativeInteger& t) const;
-  bool operator>(const NonNegativeInteger& t) const;
-  bool operator>=(const NonNegativeInteger& t) const;
+  EXACT_DECLARE_COMPARISON_OPERATORS(NonNegativeInteger)
 
-  NonNegativeInteger operator+(const NonNegativeInteger& t) const;
-  NonNegativeInteger operator-(const NonNegativeInteger& t) const;
-  NonNegativeInteger operator*(const NonNegativeInteger& t) const;
-  NonNegativeInteger operator/(const NonNegativeInteger& t) const;
-  std::pair<NonNegativeInteger, NonNegativeInteger> DivMod(
-      const NonNegativeInteger& d) const;
+  EXACT_DECLARE_ARITHMETIC_OPERATORS(NonNegativeInteger)
 
-  NonNegativeInteger& operator+=(const NonNegativeInteger& t);
-  NonNegativeInteger& operator-=(const NonNegativeInteger& t);
-  NonNegativeInteger& operator*=(const NonNegativeInteger& t);
-  NonNegativeInteger& operator/=(const NonNegativeInteger& t);
-
-  void operator<<=(unsigned int bits);
-  void operator>>=(unsigned int bits);
+  NonNegativeInteger& operator<<=(unsigned int bits);
+  NonNegativeInteger& operator>>=(unsigned int bits);
   NonNegativeInteger operator<<(unsigned int bits);
   NonNegativeInteger operator>>(unsigned int bits);
 

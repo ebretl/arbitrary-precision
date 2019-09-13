@@ -6,36 +6,21 @@
 namespace exact {
 
 class Integer {
- private:
-  NonNegativeInteger magnitude_;  // magnitude storage (base 2^64)
-  bool sign_;                     // true for negative
-
  public:
   Integer();
   Integer(int initial);
   Integer(const NonNegativeInteger& other);
+  Integer(const NonNegativeInteger& other, bool sign);
 
-  std::string DecimalString() const;
-  friend std::ostream& operator<<(std::ostream& stream,
-                                  const NonNegativeInteger& n);
+  EXACT_DECLARE_PRINT_OPERATORS(Integer)
 
-  bool operator==(const Integer& t) const;
-  bool operator!=(const Integer& t) const;
-  bool operator<(const Integer& t) const;
-  bool operator<=(const Integer& t) const;
-  bool operator>(const Integer& t) const;
-  bool operator>=(const Integer& t) const;
+  EXACT_DECLARE_COMPARISON_OPERATORS(Integer)
 
-  friend Integer operator+(const Integer& a, const Integer& b);
-  friend Integer operator-(const Integer& a, const Integer& b);
-  friend Integer operator*(const Integer& a, const Integer& b);
-  friend Integer operator/(const Integer& a, const Integer& b);
-  friend std::pair<Integer, Integer> DivMod(const Integer& n, const Integer& d);
+  EXACT_DECLARE_ARITHMETIC_OPERATORS(Integer)
 
-  Integer& operator+=(const Integer& t);
-  Integer& operator-=(const Integer& t);
-  Integer& operator*=(const Integer& t);
-  Integer& operator/=(const Integer& t);
+ private:
+  NonNegativeInteger magnitude_;  // magnitude storage
+  bool sign_;                     // true for negative
 };
 
 }  // namespace exact

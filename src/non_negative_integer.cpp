@@ -149,13 +149,14 @@ NonNegativeInteger NonNegativeInteger::operator*(
   } else if (t == 1) {
     return *this;
   } else {
-    //    if (data_.size() + y.data_.size() > 400) {
-    //      Karatsuba(y);
-    //    } else {
-    //      LongMultiply(y);
-    //    }
-    return _long_multiply(*this, t);
-    // Karatsuba(y);
+    constexpr size_t min_karatsuba_size = 100;
+    if (data_.size() >= min_karatsuba_size &&
+        t.data_.size() >= min_karatsuba_size) {
+      return _karatsuba(*this, t);
+    } else {
+      return _long_multiply(*this, t);
+    }
+    //    return _long_multiply(*this, t);
   }
 }
 
@@ -195,9 +196,37 @@ NonNegativeInteger _long_multiply(const NonNegativeInteger& a,
   return prod;
 }
 
+NonNegativeInteger _karatsuba(const NonNegativeInteger& a,
+                              const NonNegativeInteger& b) {
+  NonNegativeInteger x = a;
+  NonNegativeInteger y = b;
+
+  auto max_size = std::max(x.data_.size(), y.data_.size());
+  auto shift = max_size * 16;
+
+  auto x1 = x >> shift;
+  auto y1 = y >> shift;
+  auto x2 = x - (x1 << shift);
+  auto y2 = y - (y1 << shift);
+
+  NonNegativeInteger out = (x1 + x2) * (y1 + y2);  // K
+  auto F = x1 * y1;
+  auto G = x2 * y2;
+  out -= F;
+  out -= G;
+
+  F <<= shift * 2;
+  out <<= shift;
+
+  out += F;
+  out += G;
+
+  return out;
+}
+
 NonNegativeInteger NonNegativeInteger::operator/(
     const NonNegativeInteger& t) const {
-  return std::get<0>(DivMod(t));
+  return std::get<0>(DivMod(*this, t));
 }
 
 NonNegativeInteger& NonNegativeInteger::operator/=(
@@ -206,8 +235,8 @@ NonNegativeInteger& NonNegativeInteger::operator/=(
   return *this;
 }
 
-std::pair<NonNegativeInteger, NonNegativeInteger> NonNegativeInteger::DivMod(
-    const NonNegativeInteger& D) const {
+std::pair<NonNegativeInteger, NonNegativeInteger> DivMod(
+    const NonNegativeInteger& N, const NonNegativeInteger& D) {
   if (D == 0) {
     throw exact::OperationException("divide by zero");
   }
@@ -216,16 +245,11 @@ std::pair<NonNegativeInteger, NonNegativeInteger> NonNegativeInteger::DivMod(
   auto& [Q, R] = out;
 
   Q.data_.clear();
-  Q.data_.insert(Q.data_.end(), data_.size(), 0u);
+  Q.data_.insert(Q.data_.end(), N.data_.size(), 0u);
 
-  // 1100
-  //    1
-  // ----
-  // 1
-
-  auto it = data_.rbegin();
+  auto it = N.data_.rbegin();
   auto it_q = Q.data_.rbegin();
-  while (it != data_.rend()) {
+  while (it != N.data_.rend()) {
     for (unsigned char bit_counter = 0; bit_counter < 32; bit_counter++) {
       R <<= 1;
       R.data_.front() += (*it >> (31u - bit_counter)) & 0x1u;
@@ -242,9 +266,9 @@ std::pair<NonNegativeInteger, NonNegativeInteger> NonNegativeInteger::DivMod(
   return out;
 }
 
-std::string NonNegativeInteger::DecimalString() const {
+std::string to_string(const NonNegativeInteger& t) {
   std::deque<NonNegativeInteger> ds = {1};
-  NonNegativeInteger n = *this;
+  NonNegativeInteger n = t;
   while (n > ds.front()) {
     ds.push_front(ds.front() * 10);
   }
@@ -266,48 +290,61 @@ std::string NonNegativeInteger::DecimalString() const {
 }
 
 std::ostream& operator<<(std::ostream& stream, const NonNegativeInteger& n) {
-  return stream << n.DecimalString();
+  return stream << to_string(n);
 }
 
-void NonNegativeInteger::operator<<=(unsigned int bits) {
+NonNegativeInteger& NonNegativeInteger::operator<<=(unsigned int bits) {
   if (bits >= 32) {
     data_.insert(data_.begin(), bits / 32u, 0);
-    bits = bits % 32;
+    bits = bits % 32u;
   }
 
-  data_.push_back(0);
-  auto big_it = data_.rbegin();
-  auto small_it = big_it + 1;
-  while (small_it != data_.rend()) {
-    *big_it += (*small_it >> (32u - bits));
-    *small_it <<= bits;
-    big_it = small_it;
-    ++small_it;
+  if (bits > 0) {
+    data_.push_back(0);
+    auto big_it = data_.rbegin();
+    auto small_it = big_it + 1;
+    while (small_it != data_.rend()) {
+      *big_it += (*small_it >> (32u - bits));
+      *small_it <<= bits;
+      big_it = small_it;
+      ++small_it;
+    }
+    if (data_.back() == 0) {
+      data_.pop_back();
+    }
   }
-  if (data_.back() == 0) {
-    data_.pop_back();
-  }
+
+  return *this;
 }
 
-void NonNegativeInteger::operator>>=(unsigned int bits) {
+NonNegativeInteger& NonNegativeInteger::operator>>=(unsigned int bits) {
   if (bits >= 32) {
-    data_.erase(data_.begin(), data_.begin() + (bits / 32u));
-    bits = bits % 32;
+    auto n_remove = bits / 32u;
+    if (n_remove >= data_.size()) {
+      data_.erase(data_.begin() + 1, data_.end());
+      data_.front() = 0;
+      bits = 0;
+    } else {
+      data_.erase(data_.begin(), data_.begin() + n_remove);
+      bits = bits % 32;
+    }
   }
 
-  data_.front() >>= bits;
+  if (bits > 0) {
+    data_.front() >>= bits;
 
-  auto small_it = data_.begin();
-  auto big_it = small_it + 1;
-  while (big_it != data_.end()) {
-    *small_it += (*big_it << (32u - bits));
-    *big_it >>= bits;
-    small_it = big_it;
-    ++big_it;
+    auto small_it = data_.begin();
+    auto big_it = small_it + 1;
+    while (big_it != data_.end()) {
+      *small_it += (*big_it << (32u - bits));
+      *big_it >>= bits;
+      small_it = big_it;
+      ++big_it;
+    }
+    Trim();
   }
-  if (data_.back() == 0) {
-    data_.pop_back();
-  }
+
+  return *this;
 }
 
 NonNegativeInteger NonNegativeInteger::operator<<(unsigned int bits) {

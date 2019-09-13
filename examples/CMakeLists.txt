@@ -9,4 +9,4 @@ set_property(TARGET calc_pi test_program PROPERTY COMPILE_FLAGS "-O3 -Wall -Wped
 
 add_executable(speed_test speed_test.cpp)
 target_link_libraries(speed_test arbitrary_precision exact)
-set_property(TARGET speed_test PROPERTY COMPILE_FLAGS "-Og -Wall -Wpedantic")
+set_property(TARGET speed_test PROPERTY COMPILE_FLAGS "-O3 -Wall -Wpedantic")
