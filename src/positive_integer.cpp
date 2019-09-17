@@ -4,12 +4,12 @@
 namespace exact {
 
 PositiveInteger::PositiveInteger(unsigned int initial)
-    : PositiveInteger(NonNegativeInteger(initial)) {}
+    : PositiveInteger(UnsignedInteger(initial)) {}
 
 PositiveInteger::PositiveInteger(int initial)
-    : PositiveInteger(NonNegativeInteger(std::max(0, initial))) {}
+    : PositiveInteger(UnsignedInteger(std::max(0, initial))) {}
 
-PositiveInteger::PositiveInteger(const NonNegativeInteger& other) {
+PositiveInteger::PositiveInteger(const UnsignedInteger& other) {
   if (other < 1) {
     throw OperationException("initialized PositiveInteger with " +
                              to_string(other));
@@ -33,7 +33,7 @@ std::ostream& operator<<(std::ostream& stream, const PositiveInteger& t) {
   return stream;
 }
 
-const NonNegativeInteger& abs(const PositiveInteger& t) { return t.magnitude_; }
+const UnsignedInteger& abs(const PositiveInteger& t) { return t.magnitude_; }
 PositiveInteger& PositiveInteger::operator+=(const PositiveInteger& t) {
   magnitude_ += t.magnitude_;
   return *this;

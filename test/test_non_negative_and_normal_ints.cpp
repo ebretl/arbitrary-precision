@@ -5,7 +5,7 @@
 using namespace exact;
 
 TEST_CASE("non-negative integer comparable to int") {
-  NonNegativeInteger n = 42;
+  UnsignedInteger n = 42;
   REQUIRE(n == 42);
 
   REQUIRE(n > 0);
@@ -23,7 +23,7 @@ TEST_CASE("non-negative integer comparable to int") {
 
 TEST_CASE("varying size compares non-negative int") {
   uint32_t bits32 = 0xFFFFFFFF;
-  auto x1 = NonNegativeInteger(bits32);
+  auto x1 = UnsignedInteger(bits32);
   auto x2 = x1 + 1;
   auto x3 = x2 + 1;
 
@@ -70,27 +70,25 @@ TEST_CASE("add mixed ints") {
 }
 
 TEST_CASE("print small") {
-  REQUIRE(to_string(NonNegativeInteger(5)) == "5");
+  REQUIRE(to_string(UnsignedInteger(5)) == "5");
   REQUIRE(to_string(Integer(10)) == "10");
   REQUIRE(to_string(Integer(-2044)) == "-2044");
 }
 
-TEST_CASE("NonNegativeInteger multiply") {
-  REQUIRE(NonNegativeInteger(42) * NonNegativeInteger(10) ==
-          NonNegativeInteger(420));
-  REQUIRE(NonNegativeInteger(42) * NonNegativeInteger(0) ==
-          NonNegativeInteger(0));
+TEST_CASE("UnsignedInteger multiply") {
+  REQUIRE(UnsignedInteger(42) * UnsignedInteger(10) == UnsignedInteger(420));
+  REQUIRE(UnsignedInteger(42) * UnsignedInteger(0) == UnsignedInteger(0));
 }
 
 TEST_CASE("division nonnegative int") {
-  NonNegativeInteger q, r;
-  auto res = DivMod(13, NonNegativeInteger(3));
+  UnsignedInteger q, r;
+  auto res = DivMod(13, UnsignedInteger(3));
   q = std::get<0>(res);
   r = std::get<1>(res);
   REQUIRE(q == 4);
   REQUIRE(r == 1);
 
-  res = DivMod(NonNegativeInteger(100), 10);
+  res = DivMod(UnsignedInteger(100), 10);
   q = std::get<0>(res);
   r = std::get<1>(res);
   REQUIRE(q == 10);
@@ -99,7 +97,7 @@ TEST_CASE("division nonnegative int") {
 
 TEST_CASE("basic overflow") {
   uint32_t bits32 = 0xFFFFFFFF;
-  NonNegativeInteger x(bits32);
+  UnsignedInteger x(bits32);
   x += 1;
   x -= 1;
   REQUIRE(x == bits32);
@@ -115,7 +113,7 @@ TEST_CASE("basic overflow") {
 
 TEST_CASE("shifting") {
   uint32_t bits32 = 0xFFFFFFFF;
-  NonNegativeInteger x1 = bits32;
+  UnsignedInteger x1 = bits32;
   auto x2 = x1 << 1;
   REQUIRE(x2 == x1 * 2);
   REQUIRE(x2 > x1);
@@ -124,7 +122,7 @@ TEST_CASE("shifting") {
 }
 
 TEST_CASE("division") {
-  NonNegativeInteger x(12);
+  UnsignedInteger x(12);
   for (int i = 0; i < 100; i++) {
     x *= 97;
   }
@@ -136,7 +134,7 @@ TEST_CASE("division") {
 }
 
 TEST_CASE("negative zero") {
-  Integer neg0(NonNegativeInteger(0), true);
+  Integer neg0(UnsignedInteger(0), true);
 
   REQUIRE(neg0 + 1 == 1);
   REQUIRE(Integer(1) + neg0 == 1);
@@ -150,7 +148,7 @@ TEST_CASE("negative zero") {
 }
 
 TEST_CASE("shift mult") {
-  NonNegativeInteger a = 1;
+  UnsignedInteger a = 1;
   a <<= 64;
   auto a_sqr = a * a;
   REQUIRE(to_string(a) == "18446744073709551616");

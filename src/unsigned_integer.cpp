@@ -1,4 +1,4 @@
-#include <exact/non_negative_integer.h>
+#include <exact/unsigned_integer.h>
 
 #include <exact/exceptions.h>
 #include <algorithm>
@@ -8,32 +8,32 @@ namespace exact {
 
 constexpr uint64_t bitmask32 = std::numeric_limits<uint32_t>::max();
 
-NonNegativeInteger::NonNegativeInteger() : NonNegativeInteger(0) {}
+UnsignedInteger::UnsignedInteger() : UnsignedInteger(0) {}
 
-NonNegativeInteger::NonNegativeInteger(unsigned int initial) {
+UnsignedInteger::UnsignedInteger(unsigned int initial) {
   data_.push_back(initial);
 }
 
-bool NonNegativeInteger::operator==(const NonNegativeInteger& t) const {
+bool UnsignedInteger::operator==(const UnsignedInteger& t) const {
   return compare(*this, t) == 0;
 }
-bool NonNegativeInteger::operator!=(const NonNegativeInteger& t) const {
+bool UnsignedInteger::operator!=(const UnsignedInteger& t) const {
   return compare(*this, t) != 0;
 }
-bool NonNegativeInteger::operator<(const NonNegativeInteger& t) const {
+bool UnsignedInteger::operator<(const UnsignedInteger& t) const {
   return compare(*this, t) < 0;
 }
-bool NonNegativeInteger::operator<=(const NonNegativeInteger& t) const {
+bool UnsignedInteger::operator<=(const UnsignedInteger& t) const {
   return compare(*this, t) <= 0;
 }
-bool NonNegativeInteger::operator>(const NonNegativeInteger& t) const {
+bool UnsignedInteger::operator>(const UnsignedInteger& t) const {
   return compare(*this, t) > 0;
 }
-bool NonNegativeInteger::operator>=(const NonNegativeInteger& t) const {
+bool UnsignedInteger::operator>=(const UnsignedInteger& t) const {
   return compare(*this, t) >= 0;
 }
 
-int compare(const NonNegativeInteger& a, const NonNegativeInteger& b) {
+int compare(const UnsignedInteger& a, const UnsignedInteger& b) {
   int mag_compare = 0;
   auto a_it = a.data_.crbegin();
   const size_t a_size = a.data_.size();
@@ -61,7 +61,7 @@ int compare(const NonNegativeInteger& a, const NonNegativeInteger& b) {
   return mag_compare;
 }
 
-void NonNegativeInteger::Trim() {
+void UnsignedInteger::Trim() {
   auto first_nonzero_it = data_.end() - 1;
   while (first_nonzero_it != data_.begin() && *first_nonzero_it == 0) {
     first_nonzero_it--;
@@ -69,15 +69,15 @@ void NonNegativeInteger::Trim() {
   data_.erase(first_nonzero_it + 1, data_.end());
 }
 
-NonNegativeInteger NonNegativeInteger::operator+(
-    const NonNegativeInteger& t) const {
-  NonNegativeInteger out = *this;
+UnsignedInteger UnsignedInteger::operator+(
+    const UnsignedInteger& t) const {
+  UnsignedInteger out = *this;
   out += t;
   return out;
 }
 
-NonNegativeInteger& NonNegativeInteger::operator+=(
-    const NonNegativeInteger& t) {
+UnsignedInteger& UnsignedInteger::operator+=(
+    const UnsignedInteger& t) {
   if (t.data_.size() > data_.size()) {
     data_.insert(data_.end(), t.data_.size() - data_.size(), 0);
   }
@@ -104,21 +104,21 @@ NonNegativeInteger& NonNegativeInteger::operator+=(
   return *this;
 }
 
-NonNegativeInteger NonNegativeInteger::operator-(
-    const NonNegativeInteger& t) const {
-  NonNegativeInteger out = *this;
+UnsignedInteger UnsignedInteger::operator-(
+    const UnsignedInteger& t) const {
+  UnsignedInteger out = *this;
   out -= t;
   return out;
 }
 
-NonNegativeInteger& NonNegativeInteger::operator-=(
-    const NonNegativeInteger& t) {
+UnsignedInteger& UnsignedInteger::operator-=(
+    const UnsignedInteger& t) {
   if (t > *this) {
     throw exact::OperationException(
         "subtracting larger value from UnsignedInteger");
   }
 
-  NonNegativeInteger t_negated;
+  UnsignedInteger t_negated;
   t_negated.data_.clear();
   for (auto digit : t.data_) {
     t_negated.data_.push_back(bitmask32 - digit);
@@ -140,10 +140,10 @@ NonNegativeInteger& NonNegativeInteger::operator-=(
   return *this;
 }
 
-NonNegativeInteger NonNegativeInteger::operator*(
-    const NonNegativeInteger& t) const {
+UnsignedInteger UnsignedInteger::operator*(
+    const UnsignedInteger& t) const {
   if (*this == 0 || t == 0) {
-    return NonNegativeInteger(0);
+    return UnsignedInteger(0);
   } else if (*this == 1) {
     return t;
   } else if (t == 1) {
@@ -160,18 +160,18 @@ NonNegativeInteger NonNegativeInteger::operator*(
   }
 }
 
-NonNegativeInteger& NonNegativeInteger::operator*=(
-    const NonNegativeInteger& t) {
+UnsignedInteger& UnsignedInteger::operator*=(
+    const UnsignedInteger& t) {
   *this = *this * t;
   return *this;
 }
 
-NonNegativeInteger _long_multiply(const NonNegativeInteger& a,
-                                  const NonNegativeInteger& b) {
+UnsignedInteger _long_multiply(const UnsignedInteger& a,
+                                  const UnsignedInteger& b) {
   const size_t a_size = a.data_.size();
   const size_t b_size = b.data_.size();
 
-  NonNegativeInteger prod;
+  UnsignedInteger prod;
   prod.data_.clear();
   prod.data_.insert(prod.data_.end(), a_size + b_size, 0);
 
@@ -196,10 +196,10 @@ NonNegativeInteger _long_multiply(const NonNegativeInteger& a,
   return prod;
 }
 
-NonNegativeInteger _karatsuba(const NonNegativeInteger& a,
-                              const NonNegativeInteger& b) {
-  NonNegativeInteger x = a;
-  NonNegativeInteger y = b;
+UnsignedInteger _karatsuba(const UnsignedInteger& a,
+                              const UnsignedInteger& b) {
+  UnsignedInteger x = a;
+  UnsignedInteger y = b;
 
   auto max_size = std::max(x.data_.size(), y.data_.size());
   auto shift = max_size * 16;
@@ -209,7 +209,7 @@ NonNegativeInteger _karatsuba(const NonNegativeInteger& a,
   auto x2 = x - (x1 << shift);
   auto y2 = y - (y1 << shift);
 
-  NonNegativeInteger out = (x1 + x2) * (y1 + y2);  // K
+  UnsignedInteger out = (x1 + x2) * (y1 + y2);  // K
   auto F = x1 * y1;
   auto G = x2 * y2;
   out -= F;
@@ -224,24 +224,24 @@ NonNegativeInteger _karatsuba(const NonNegativeInteger& a,
   return out;
 }
 
-NonNegativeInteger NonNegativeInteger::operator/(
-    const NonNegativeInteger& t) const {
+UnsignedInteger UnsignedInteger::operator/(
+    const UnsignedInteger& t) const {
   return std::get<0>(DivMod(*this, t));
 }
 
-NonNegativeInteger& NonNegativeInteger::operator/=(
-    const NonNegativeInteger& t) {
+UnsignedInteger& UnsignedInteger::operator/=(
+    const UnsignedInteger& t) {
   *this = *this / t;
   return *this;
 }
 
-std::pair<NonNegativeInteger, NonNegativeInteger> DivMod(
-    const NonNegativeInteger& N, const NonNegativeInteger& D) {
+std::pair<UnsignedInteger, UnsignedInteger> DivMod(
+    const UnsignedInteger& N, const UnsignedInteger& D) {
   if (D == 0) {
     throw exact::OperationException("divide by zero");
   }
 
-  auto out = std::make_pair<NonNegativeInteger, NonNegativeInteger>(0, 0);
+  auto out = std::make_pair<UnsignedInteger, UnsignedInteger>(0, 0);
   auto& [Q, R] = out;
 
   Q.data_.clear();
@@ -266,9 +266,9 @@ std::pair<NonNegativeInteger, NonNegativeInteger> DivMod(
   return out;
 }
 
-std::string to_string(const NonNegativeInteger& t) {
-  std::deque<NonNegativeInteger> ds = {1};
-  NonNegativeInteger n = t;
+std::string to_string(const UnsignedInteger& t) {
+  std::deque<UnsignedInteger> ds = {1};
+  UnsignedInteger n = t;
   while (n > ds.front()) {
     ds.push_front(ds.front() * 10);
   }
@@ -289,11 +289,11 @@ std::string to_string(const NonNegativeInteger& t) {
   return str;
 }
 
-std::ostream& operator<<(std::ostream& stream, const NonNegativeInteger& n) {
+std::ostream& operator<<(std::ostream& stream, const UnsignedInteger& n) {
   return stream << to_string(n);
 }
 
-NonNegativeInteger& NonNegativeInteger::operator<<=(unsigned int bits) {
+UnsignedInteger& UnsignedInteger::operator<<=(unsigned int bits) {
   if (bits >= 32) {
     data_.insert(data_.begin(), bits / 32u, 0);
     bits = bits % 32u;
@@ -317,7 +317,7 @@ NonNegativeInteger& NonNegativeInteger::operator<<=(unsigned int bits) {
   return *this;
 }
 
-NonNegativeInteger& NonNegativeInteger::operator>>=(unsigned int bits) {
+UnsignedInteger& UnsignedInteger::operator>>=(unsigned int bits) {
   if (bits >= 32) {
     auto n_remove = bits / 32u;
     if (n_remove >= data_.size()) {
@@ -347,14 +347,14 @@ NonNegativeInteger& NonNegativeInteger::operator>>=(unsigned int bits) {
   return *this;
 }
 
-NonNegativeInteger NonNegativeInteger::operator<<(unsigned int bits) {
-  NonNegativeInteger copy(*this);
+UnsignedInteger UnsignedInteger::operator<<(unsigned int bits) {
+  UnsignedInteger copy(*this);
   copy <<= bits;
   return copy;
 }
 
-NonNegativeInteger NonNegativeInteger::operator>>(unsigned int bits) {
-  NonNegativeInteger copy(*this);
+UnsignedInteger UnsignedInteger::operator>>(unsigned int bits) {
+  UnsignedInteger copy(*this);
   copy >>= bits;
   return copy;
 }

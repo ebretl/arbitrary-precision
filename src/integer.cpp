@@ -6,10 +6,10 @@ namespace exact {
 
 Integer::Integer() : Integer(0) {}
 
-Integer::Integer(const NonNegativeInteger& other)
+Integer::Integer(const UnsignedInteger& other)
     : magnitude_(other), sign_(false) {}
 
-Integer::Integer(const NonNegativeInteger& other, bool sign)
+Integer::Integer(const UnsignedInteger& other, bool sign)
     : magnitude_(other), sign_(sign) {}
 
 Integer::Integer(int32_t initial)
@@ -146,6 +146,6 @@ std::ostream& operator<<(std::ostream& stream, const Integer& t) {
   return stream << to_string(t);
 }
 
-const NonNegativeInteger& abs(const Integer& t) { return t.magnitude_; }
+const UnsignedInteger& abs(const Integer& t) { return t.magnitude_; }
 
 }  // namespace exact
