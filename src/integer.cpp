@@ -12,8 +12,10 @@ Integer::Integer(const NonNegativeInteger& other)
 Integer::Integer(const NonNegativeInteger& other, bool sign)
     : magnitude_(other), sign_(sign) {}
 
-Integer::Integer(int initial)
+Integer::Integer(int32_t initial)
     : magnitude_(std::abs(initial)), sign_(initial < 0) {}
+
+Integer::Integer(const PositiveInteger& other) : magnitude_(abs(other)) {}
 
 bool Integer::operator==(const Integer& t) const {
   if (sign_ == t.sign_) {  // same sign
@@ -143,5 +145,7 @@ std::string to_string(const Integer& t) {
 std::ostream& operator<<(std::ostream& stream, const Integer& t) {
   return stream << to_string(t);
 }
+
+const NonNegativeInteger& abs(const Integer& t) { return t.magnitude_; }
 
 }  // namespace exact
