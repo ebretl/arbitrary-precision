@@ -14,46 +14,93 @@ PositiveInteger::PositiveInteger(const UnsignedInteger& other) {
     throw OperationException("initialized PositiveInteger with " +
                              to_string(other));
   }
-  magnitude_ = other;
+  magnitude = other;
 }
 
 bool PositiveInteger::operator==(const PositiveInteger& t) const {
-  return magnitude_ == t.magnitude_;
+  return magnitude == t.magnitude;
 }
 
 bool PositiveInteger::operator!=(const PositiveInteger& t) const {
-  return magnitude_ != t.magnitude_;
+  return magnitude != t.magnitude;
 }
 
 bool PositiveInteger::operator<(const PositiveInteger& t) const {
-  return magnitude_ < t.magnitude_;
+  return magnitude < t.magnitude;
+}
+
+bool PositiveInteger::operator>(const PositiveInteger& t) const {
+  return magnitude > t.magnitude;
+}
+
+bool PositiveInteger::operator<=(const PositiveInteger& t) const {
+  return magnitude <= t.magnitude;
+}
+
+bool PositiveInteger::operator>=(const PositiveInteger& t) const {
+  return magnitude >= t.magnitude;
 }
 
 std::ostream& operator<<(std::ostream& stream, const PositiveInteger& t) {
-  return stream;
+  return stream << to_string(t);
 }
 
-const UnsignedInteger& abs(const PositiveInteger& t) { return t.magnitude_; }
-PositiveInteger& PositiveInteger::operator+=(const PositiveInteger& t) {
-  magnitude_ += t.magnitude_;
-  return *this;
+std::string to_string(const exact::PositiveInteger& t) {
+  return to_string(t.magnitude);
 }
 
 PositiveInteger& PositiveInteger::operator-=(const PositiveInteger& t) {
-  if (t.magnitude_ >= magnitude_) {
+  if (t.magnitude >= magnitude) {
     throw OperationException(
         "PositiveInteger subtraction result would not be positive");
   }
-  magnitude_ -= t.magnitude_;
+  magnitude -= t.magnitude;
+  return *this;
+}
+
+PositiveInteger& PositiveInteger::operator+=(const PositiveInteger& t) {
+  magnitude += t.magnitude;
   return *this;
 }
 
 PositiveInteger PositiveInteger::operator-(const PositiveInteger& t) const {
+  if (t.magnitude >= magnitude) {
+    throw OperationException(
+        "PositiveInteger subtraction result would not be positive");
+  }
   return PositiveInteger(*this) -= t;
 }
 
 PositiveInteger PositiveInteger::operator+(const PositiveInteger& t) const {
   return PositiveInteger(*this) += t;
+}
+
+PositiveInteger& PositiveInteger::operator*=(const exact::PositiveInteger& t) {
+  magnitude *= t.magnitude;
+  return *this;
+}
+
+PositiveInteger PositiveInteger::operator*(
+    const exact::PositiveInteger& t) const {
+  return PositiveInteger(magnitude * t.magnitude);
+}
+
+PositiveInteger& PositiveInteger::operator/=(const exact::PositiveInteger& t) {
+  if (t > *this) {
+    throw OperationException(
+        "Dividing PositiveInteger by a larger value would result in zero");
+  }
+  magnitude /= t.magnitude;
+  return *this;
+}
+
+PositiveInteger PositiveInteger::operator/(
+    const exact::PositiveInteger& t) const {
+  if (t > *this) {
+    throw OperationException(
+        "Dividing PositiveInteger by a larger value would result in zero");
+  }
+  return PositiveInteger(magnitude / t.magnitude);
 }
 
 }  // namespace exact

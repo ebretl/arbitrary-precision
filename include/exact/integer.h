@@ -8,6 +8,9 @@ namespace exact {
 
 class Integer {
  public:
+  UnsignedInteger magnitude;  // magnitude storage
+  bool sign;                  // true for negative
+
   Integer();
   Integer(int32_t initial);
   Integer(const UnsignedInteger& other);
@@ -19,12 +22,6 @@ class Integer {
   EXACT_DECLARE_COMPARISON_OPERATORS(Integer)
 
   EXACT_DECLARE_ARITHMETIC_OPERATORS(Integer)
-
-  friend const UnsignedInteger& abs(const Integer& t);
-
- private:
-  UnsignedInteger magnitude_;  // magnitude storage
-  bool sign_;                     // true for negative
 };
 
 }  // namespace exact

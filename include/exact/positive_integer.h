@@ -7,6 +7,8 @@ namespace exact {
 
 class PositiveInteger {
  public:
+  UnsignedInteger magnitude;  // magnitude storage
+
   PositiveInteger() = delete;
   PositiveInteger(uint32_t initial);
   PositiveInteger(int32_t initial);
@@ -17,11 +19,6 @@ class PositiveInteger {
   EXACT_DECLARE_COMPARISON_OPERATORS(PositiveInteger)
 
   EXACT_DECLARE_ARITHMETIC_OPERATORS(PositiveInteger)
-
-  friend const UnsignedInteger& abs(const PositiveInteger& t);
-
- private:
-  UnsignedInteger magnitude_;  // magnitude storage
 };
 
 }  // namespace exact

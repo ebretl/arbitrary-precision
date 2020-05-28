@@ -65,3 +65,25 @@ TEST_CASE("positive integer subtraction") {
   REQUIRE(p1 - p2 == n1 - n2);
   REQUIRE_THROWS(p2 - p1);
 }
+
+TEST_CASE("positive integer multiply") {
+  UnsignedInteger n1 =
+      (UnsignedInteger(10) << 483) + (UnsignedInteger(3736) << 184);
+  UnsignedInteger n2 =
+      (UnsignedInteger(47) << 190) + (UnsignedInteger(3837) << 91);
+  PositiveInteger p1 = n1;
+  PositiveInteger p2 = n2;
+
+  REQUIRE(p1 * p2 == n1 * n2);
+}
+
+TEST_CASE("positive integer divide") {
+  UnsignedInteger n1 =
+      (UnsignedInteger(10) << 483) + (UnsignedInteger(3736) << 184);
+  UnsignedInteger n2 =
+      (UnsignedInteger(47) << 190) + (UnsignedInteger(3837) << 91);
+  PositiveInteger p1 = n1;
+  PositiveInteger p2 = n2;
+
+  REQUIRE(p1 / p2 == n1 / n2);
+}

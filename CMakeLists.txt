@@ -11,7 +11,7 @@ add_library(exact
         src/rational.cpp
         src/positive_integer.cpp
         )
-set_property(TARGET exact PROPERTY COMPILE_FLAGS "-O3 -Wall -Wpedantic")
+set_property(TARGET exact PROPERTY COMPILE_FLAGS "-O2 -g -Wall -Wpedantic")
 
 add_executable(run_tests
         test/test_main.cpp
